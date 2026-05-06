@@ -1,0 +1,36 @@
+# --- Operating System ---
+
+.DS_Store
+Thumbs.db
+
+# --- IDE Environment ---
+
+.idea/
+.vscode/
+_.iml
+_.iws
+
+# --- Backend (Spring Boot / Maven) ---
+
+backend/target/
+backend/pom.xml.tag
+backend/pom.xml.releaseBackup
+backend/pom.xml.versionsBackup
+backend/pom.xml.next
+backend/release.properties
+backend/dependency-reduced-pom.xml
+backend/buildNumber.properties
+backend/.mvn/timing.properties
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# --- Frontend & Mobile (Future use) ---
+
+node_modules/
+dist/
+build/
+.env
+
+# --- Database ---
+
+_.sqlite
+_.db
