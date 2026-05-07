@@ -4,7 +4,7 @@
 The system follows a layered Client-Server architecture, optimized for real-time communication and horizontal scalability.
 
 <div style="text-align: center;">
-  <img src="./diagrams/high-level-architecture.svg" style="width: 50%; height: auto;"/>
+  <img src="./diagrams/high-level-architecture.svg" style="width: 90%; height: auto;"/>
   <p><em>High Level Architecture</em></p>
 </div>
 
