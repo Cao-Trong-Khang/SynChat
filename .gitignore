@@ -7,8 +7,10 @@ Thumbs.db
 
 .idea/
 .vscode/
-_.iml
-_.iws
+*.iml
+*.iws
+*.sqlite
+*.db
 
 # --- Backend (Spring Boot / Maven) ---
 
