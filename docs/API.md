@@ -1,4 +1,4 @@
-# SynChat API Specification
+# SynChat API
 
 ## Table of Contents
 
