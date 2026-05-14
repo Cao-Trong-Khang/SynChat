@@ -126,19 +126,19 @@ The backend should be a modular monolith.
 
 Important modules:
 
-| Module            | Responsibility                                                   |
-| ----------------- | ---------------------------------------------------------------- |
-| Auth              | Authenticate REST and WebSocket requests.                        |
-| User              | Search users by email or display name.                           |
-| Conversation      | Find/create direct conversations and load conversation metadata. |
-| Message           | Persist messages and create message events.                      |
-| Receipt           | Handle delivered and read receipts.                              |
-| Sync              | Bootstrap conversations, load messages, and replay user events.  |
-| WebSocket Gateway | Receive realtime commands and deliver realtime events.           |
-| Device            | Register device and push token.                                  |
-| Presence / Typing | Store temporary realtime state in Redis.                         |
-| Outbox Worker     | Publish pending outbox events.                                   |
-| Notification      | Send push notifications to background/offline devices.           |
+| Module            | Responsibility                                                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth              | Register users, verify credentials, issue access tokens, manage refresh sessions per device, and authenticate REST/WebSocket requests. |
+| User              | Search users by email or display name.                                                                                                 |
+| Conversation      | Find/create direct conversations and load conversation metadata.                                                                       |
+| Message           | Persist messages and create message events.                                                                                            |
+| Receipt           | Handle delivered and read receipts.                                                                                                    |
+| Sync              | Bootstrap conversations, load messages, and replay user events.                                                                        |
+| WebSocket Gateway | Receive realtime commands and deliver realtime events.                                                                                 |
+| Device            | Register device and push token.                                                                                                        |
+| Presence / Typing | Store temporary realtime state in Redis.                                                                                               |
+| Outbox Worker     | Publish pending outbox events.                                                                                                         |
+| Notification      | Send push notifications to background/offline devices.                                                                                 |
 
 ---
 
@@ -151,6 +151,8 @@ Server tables:
 ```text
 USERS
 DEVICES
+USER_CREDENTIALS
+AUTH_SESSIONS
 CONVERSATIONS
 CONVERSATION_MEMBERS
 MESSAGES
@@ -180,6 +182,10 @@ The system uses both REST and WebSocket.
 
 REST is used for:
 
+- Register.
+- Login.
+- Refresh session.
+- Logout.
 - Bootstrap sync.
 - Pagination.
 - Event recovery.
@@ -424,3 +430,5 @@ module
 8. `OUTBOX_EVENTS` must be inserted in the same transaction as the business write.
 9. Conversation list pagination must use keyset cursor, not offset.
 10. Local DB does not need to mirror server DB.
+11. Login creates a session for the current device only.
+12. Logout revokes only the current device session and clears local chat cache on that device.
