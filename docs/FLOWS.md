@@ -2,25 +2,103 @@
 
 ## Table of Contents
 
-1. [First App Open on a New Platform](#1-first-app-open-on-a-new-platform)
-2. [App Reopens After Offline Time](#2-app-reopens-after-offline-time)
-3. [Load More Conversations](#3-load-more-conversations)
-4. [Search User and Open Virtual Conversation](#4-search-user-and-open-virtual-conversation)
-5. [Open Conversation Detail](#5-open-conversation-detail)
-6. [Load Older Messages](#6-load-older-messages)
-7. [Send Message](#7-send-message)
-8. [Delivered Receipt](#8-delivered-receipt)
-9. [Read Receipt and Multi-Device Consistency](#9-read-receipt-and-multi-device-consistency)
-10. [Push Notification for Offline or Background Recipient](#10-push-notification-for-offline-or-background-recipient)
-11. [WebSocket Event Gap Handling](#11-websocket-event-gap-handling)
-12. [Send Failure and Retry](#12-send-failure-and-retry)
-13. [Device Registration / Push Token Refresh](#13-device-registration--push-token-refresh)
-14. [Presence and Last Seen](#14-presence-and-last-seen)
-15. [Typing Indicator](#15-typing-indicator)
+1. [Register](#1-register)
+2. [Login](#2-login)
+3. [Refresh Session](#3-refresh-session)
+4. [Logout](#4-logout)
+5. [First App Open on a New Platform](#5-first-app-open-on-a-new-platform)
+6. [App Reopens After Offline Time](#6-app-reopens-after-offline-time)
+7. [Load More Conversations](#7-load-more-conversations)
+8. [Search User and Open Virtual Conversation](#8-search-user-and-open-virtual-conversation)
+9. [Open Conversation Detail](#9-open-conversation-detail)
+10. [Load Older Messages](#10-load-older-messages)
+11. [Send Message](#11-send-message)
+12. [Delivered Receipt](#12-delivered-receipt)
+13. [Read Receipt and Multi-Device Consistency](#13-read-receipt-and-multi-device-consistency)
+14. [Push Notification for Offline or Background Recipient](#14-push-notification-for-offline-or-background-recipient)
+15. [WebSocket Event Gap Handling](#15-websocket-event-gap-handling)
+16. [Send Failure and Retry](#16-send-failure-and-retry)
+17. [Device Registration / Push Token Refresh](#17-device-registration--push-token-refresh)
+18. [Presence and Last Seen](#18-presence-and-last-seen)
+19. [Typing Indicator](#19-typing-indicator)
 
 ---
 
-## 1. First App Open on a New Platform
+## 1. Register
+
+### Diagram
+
+![Register](diagrams/flows/auth-register.svg)
+
+### Description
+
+- This flow runs when a new user creates an account.
+
+- The client sends email, password, and display name to the server.
+
+- The server validates the input, checks that the email is unique, creates the user profile in `USERS`, stores the password hash in `USER_CREDENTIALS`, and initializes the user's event stream in `USER_EVENT_OFFSETS`.
+
+- Registration does not create an authenticated session. The server does not return access token or refresh token.
+
+- After registration succeeds, the client shows a success message and navigates back to the login screen.
+
+---
+
+## 2. Login
+
+### Diagram
+
+![Login](diagrams/flows/auth-login.svg)
+
+### Description
+
+- This flow runs when an existing user signs in.
+
+- The user only enters email and password. The client creates or reads `deviceId` from local secure storage and detects `platform` from the current app environment.
+
+- The server verifies the credentials and creates a new `AUTH_SESSIONS` row for the current device. This does not affect other devices of the same user.
+
+- The login request does not require `push_token` or `push_provider`. Push token registration is handled by the Device Registration / Push Token Refresh flow after login, because the push token may not be available immediately.
+
+- After login, the client stores tokens securely and runs first app open sync. Because logout clears local chat cache, the local chat database is expected to be empty after a normal login.
+
+---
+
+## 3. Refresh Session
+
+### Diagram
+
+![Refresh Session](diagrams/flows/auth-refresh.svg)
+
+### Description
+
+- This flow runs when the access token is expired but the user still has a valid refresh session.
+
+- The client asks the Auth module for a new access token. If the refresh session is valid, the server returns a new access token.
+
+- If refresh fails, the client should return to the login screen and stop authenticated sync or WebSocket activity.
+
+---
+
+## 4. Logout
+
+### Diagram
+
+![Logout](diagrams/flows/auth-logout.svg)
+
+### Description
+
+- This flow runs when the user signs out from the app.
+
+- The client asks the server to revoke the current session or device session. The client then disconnects WebSocket and stops local outbox processing.
+
+- On logout, the client clears local cache to prevent another user on the same device from reading cached messages.
+
+- The client removes local chat data, sync state, and pending local commands. After the same user logs in again, the app will bootstrap sync from the server.
+
+---
+
+## 5. First App Open on a New Platform
 
 ### Diagram
 
@@ -36,7 +114,7 @@
 
 ---
 
-## 2. App Reopens After Offline Time
+## 6. App Reopens After Offline Time
 
 ### Diagram
 
@@ -52,7 +130,7 @@
 
 ---
 
-## 3. Load More Conversations
+## 7. Load More Conversations
 
 ### Diagram
 
@@ -64,11 +142,11 @@
 
 - The client uses `next_conversation_cursor` and `has_more_conversations` from `LOCAL_SYNC_STATE`. The server uses keyset pagination, not offset pagination, because conversations can move to the top when new messages arrive.
 
-- The response updates `LOCAL_USERS`, `LOCAL_CONVERSATIONS`, `LOCAL_MESSAGE_SYNC_STATE`, and `LOCAL_SYNC_STATE`.
+- The response updates `LOCAL_USERS`, `LOCAL_CONVERSATIONS`, and `LOCAL_SYNC_STATE`. For `LOCAL_MESSAGE_SYNC_STATE`, the client only creates it if it does not exist yet, and must not reset an existing message range.
 
 ---
 
-## 4. Search User and Open Virtual Conversation
+## 8. Search User and Open Virtual Conversation
 
 ### Diagram
 
@@ -82,7 +160,7 @@
 
 ---
 
-## 5. Open Conversation Detail
+## 9. Open Conversation Detail
 
 ### Diagram
 
@@ -96,7 +174,7 @@
 
 ---
 
-## 6. Load Older Messages
+## 10. Load Older Messages
 
 ### Diagram
 
@@ -110,7 +188,7 @@
 
 ---
 
-## 7. Send Message
+## 11. Send Message
 
 ### Diagram
 
@@ -122,11 +200,11 @@
 
 - If the conversation already exists, the client sends `conversationId`. If it is virtual, the client sends `recipientId`. The server creates or finds the direct conversation, inserts the message into `MESSAGES`, updates `CONVERSATIONS`, updates `CONVERSATION_MEMBERS`, inserts `USER_EVENTS`, and inserts `OUTBOX_EVENTS`.
 
-- The ACK contains the server conversation id, message sequence, server time, and `client_message_id`. If the ACK is lost and the client retries with the same client_message_id, the server must return the existing message instead of inserting a duplicate.
+- The ACK contains the server conversation id, message sequence, server time, and `client_message_id`. If the ACK is lost and the client retries with the same `client_message_id`, the server must return the existing message instead of inserting a duplicate.
 
 ---
 
-## 8. Delivered Receipt
+## 12. Delivered Receipt
 
 ### Diagram
 
@@ -142,7 +220,7 @@
 
 ---
 
-## 9. Read Receipt and Multi-Device Consistency
+## 13. Read Receipt and Multi-Device Consistency
 
 ### Diagram
 
@@ -156,7 +234,7 @@
 
 ---
 
-## 10. Push Notification for Offline or Background Recipient
+## 14. Push Notification for Offline or Background Recipient
 
 ### Diagram
 
@@ -166,9 +244,11 @@
 
 - Push notification is decided per device, not only per user.
 
-- Device state such as foreground, background, offline, and active conversation is stored in Redis. Durable push data is stored in `DEVICES`. If the recipient device is background or offline, the worker sends a push notification using `push_token` and `push_provider`.
+- Device state such as foreground, background, and offline is stored in Redis. Durable push data is stored in `DEVICES`. If the recipient device is background or offline, the worker sends a push notification using `push_token` and `push_provider`.
 
-## 11. WebSocket Event Gap Handling
+---
+
+## 15. WebSocket Event Gap Handling
 
 ### Diagram
 
@@ -184,7 +264,7 @@
 
 ---
 
-## 12. Send Failure and Retry
+## 16. Send Failure and Retry
 
 ### Diagram
 
@@ -202,7 +282,7 @@
 
 ---
 
-## 13. Device Registration / Push Token Refresh
+## 17. Device Registration / Push Token Refresh
 
 ### Diagram
 
@@ -218,7 +298,7 @@
 
 ---
 
-## 14. Presence and Last Seen
+## 18. Presence and Last Seen
 
 ### Diagram
 
@@ -236,7 +316,7 @@
 
 ---
 
-## 15. Typing Indicator
+## 19. Typing Indicator
 
 ### Diagram
 
