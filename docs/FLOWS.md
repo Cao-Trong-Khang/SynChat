@@ -1,4 +1,4 @@
-# Chat System Flows
+# SynChat Flows
 
 ## Table of Contents
 
