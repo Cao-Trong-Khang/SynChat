@@ -32,5 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-# Ignore environment variables
+# Environment variables
 .env
+
+# Logs
+*.log
