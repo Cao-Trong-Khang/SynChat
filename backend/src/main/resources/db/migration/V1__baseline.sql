@@ -1,2 +1,0 @@
--- Baseline migration.
--- Real schema migrations will be added later.
