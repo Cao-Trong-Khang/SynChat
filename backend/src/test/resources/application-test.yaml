@@ -5,8 +5,3 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/syn_chat_db
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
