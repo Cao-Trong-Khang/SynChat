@@ -1,5 +1,7 @@
 package com.synchat.backend.auth.controller;
 
+import com.synchat.backend.auth.dto.LoginRequest;
+import com.synchat.backend.auth.dto.LoginResponse;
 import com.synchat.backend.auth.dto.RegisterRequest;
 import com.synchat.backend.auth.dto.SuccessResponse;
 import com.synchat.backend.auth.service.AuthService;
@@ -22,5 +24,10 @@ public class AuthController {
     @PostMapping("/register")
     public SuccessResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 }
