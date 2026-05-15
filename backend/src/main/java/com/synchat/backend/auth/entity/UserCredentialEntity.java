@@ -34,6 +34,10 @@ public class UserCredentialEntity {
         this.updatedAt = updatedAt;
     }
 
+    public static UserCredentialEntity create(UUID userId, String passwordHash, Instant now) {
+        return new UserCredentialEntity(userId, passwordHash, now, now);
+    }
+
     public UUID getUserId() {
         return userId;
     }

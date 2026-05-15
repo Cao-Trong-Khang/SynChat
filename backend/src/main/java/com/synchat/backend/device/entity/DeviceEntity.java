@@ -53,6 +53,29 @@ public class DeviceEntity {
         this.updatedAt = updatedAt;
     }
 
+    public static DeviceEntity create(
+            UUID id,
+            UUID userId,
+            String platform,
+            String pushToken,
+            String pushProvider,
+            Instant now
+    ) {
+        return new DeviceEntity(id, userId, platform, pushToken, pushProvider, now, now);
+    }
+
+    public void updateLoginOwnerAndPlatform(UUID userId, String platform, Instant now) {
+        this.userId = userId;
+        this.platform = platform;
+        this.updatedAt = now;
+    }
+
+    public void updatePushToken(String pushToken, String pushProvider, Instant now) {
+        this.pushToken = pushToken;
+        this.pushProvider = pushProvider;
+        this.updatedAt = now;
+    }
+
     public UUID getId() {
         return id;
     }

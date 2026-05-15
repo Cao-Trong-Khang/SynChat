@@ -30,6 +30,10 @@ public class UserEventOffsetEntity {
         this.updatedAt = updatedAt;
     }
 
+    public static UserEventOffsetEntity create(UUID userId, Instant now) {
+        return new UserEventOffsetEntity(userId, 0L, now);
+    }
+
     public UUID getUserId() {
         return userId;
     }

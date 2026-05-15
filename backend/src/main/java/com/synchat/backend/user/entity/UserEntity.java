@@ -53,6 +53,10 @@ public class UserEntity {
         this.updatedAt = updatedAt;
     }
 
+    public static UserEntity create(UUID id, String email, String displayName, String avatarUrl, Instant now) {
+        return new UserEntity(id, email, displayName, avatarUrl, null, now, now);
+    }
+
     public UUID getId() {
         return id;
     }

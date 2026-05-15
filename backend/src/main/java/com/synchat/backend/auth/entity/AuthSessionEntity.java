@@ -53,6 +53,30 @@ public class AuthSessionEntity {
         this.revokedAt = revokedAt;
     }
 
+    public static AuthSessionEntity create(
+            UUID id,
+            UUID userId,
+            UUID deviceId,
+            String refreshTokenHash,
+            Instant createdAt,
+            Instant expiresAt
+    ) {
+        return new AuthSessionEntity(id, userId, deviceId, refreshTokenHash, createdAt, expiresAt, null);
+    }
+
+    public boolean isActiveAt(Instant now) {
+        return revokedAt == null && expiresAt.isAfter(now);
+    }
+
+    public void rotateRefreshToken(String newRefreshTokenHash, Instant newExpiresAt) {
+        this.refreshTokenHash = newRefreshTokenHash;
+        this.expiresAt = newExpiresAt;
+    }
+
+    public void revoke(Instant revokedAt) {
+        this.revokedAt = revokedAt;
+    }
+
     public UUID getId() {
         return id;
     }
