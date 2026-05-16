@@ -3,6 +3,8 @@ package com.synchat.backend.auth.controller;
 import com.synchat.backend.auth.dto.LoginRequest;
 import com.synchat.backend.auth.dto.LoginResponse;
 import com.synchat.backend.auth.dto.RegisterRequest;
+import com.synchat.backend.auth.dto.RefreshSessionRequest;
+import com.synchat.backend.auth.dto.RefreshSessionResponse;
 import com.synchat.backend.auth.dto.SuccessResponse;
 import com.synchat.backend.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -29,5 +31,10 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public RefreshSessionResponse refresh(@Valid @RequestBody RefreshSessionRequest request) {
+        return authService.refresh(request);
     }
 }

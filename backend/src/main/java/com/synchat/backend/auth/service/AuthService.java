@@ -3,6 +3,8 @@ package com.synchat.backend.auth.service;
 import com.synchat.backend.auth.dto.LoginRequest;
 import com.synchat.backend.auth.dto.LoginResponse;
 import com.synchat.backend.auth.dto.RegisterRequest;
+import com.synchat.backend.auth.dto.RefreshSessionRequest;
+import com.synchat.backend.auth.dto.RefreshSessionResponse;
 import com.synchat.backend.auth.dto.SuccessResponse;
 import com.synchat.backend.auth.dto.UserProfileResponse;
 import com.synchat.backend.auth.entity.AuthSessionEntity;
@@ -137,7 +139,43 @@ public class AuthService {
         );
     }
 
+    @Transactional
+    public RefreshSessionResponse refresh(RefreshSessionRequest request) {
+        Instant now = Instant.now();
+        String refreshTokenHash = refreshTokenService.hashRefreshToken(request.refreshToken());
+
+        AuthSessionEntity session = authSessionRepository
+                .findByRefreshTokenHashAndDeviceId(refreshTokenHash, request.deviceId())
+                .orElseThrow(this::invalidRefreshSession);
+
+        if (!session.isActiveAt(now)) {
+            throw invalidRefreshSession();
+        }
+
+        String newRefreshToken = refreshTokenService.generateRefreshToken();
+        String newRefreshTokenHash = refreshTokenService.hashRefreshToken(newRefreshToken);
+        Instant newRefreshTokenExpiresAt = now.plus(appProperties.jwt().refreshTtlDays(), ChronoUnit.DAYS);
+        session.rotateRefreshToken(newRefreshTokenHash, newRefreshTokenExpiresAt);
+
+        AccessTokenService.AccessTokenResult accessToken = accessTokenService.createAccessToken(
+                session.getUserId(),
+                session.getId(),
+                session.getDeviceId()
+        );
+
+        return new RefreshSessionResponse(
+                accessToken.token(),
+                accessToken.expiresAt(),
+                newRefreshToken,
+                newRefreshTokenExpiresAt
+        );
+    }
+
     private AppException invalidCredentials() {
         return new AppException(ErrorCode.INVALID_CREDENTIALS, "Login email or password is incorrect.");
+    }
+
+    private AppException invalidRefreshSession() {
+        return new AppException(ErrorCode.UNAUTHORIZED, "Invalid refresh session.");
     }
 }
