@@ -21,6 +21,7 @@ import com.synchat.backend.auth.service.AuthService;
 import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.conversation.service.ConversationMetadataMapper;
+import com.synchat.backend.conversation.service.ConversationService;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
@@ -79,6 +80,9 @@ class AuthServiceIntegrationTests {
 
     @MockBean
     private ConversationMetadataMapper conversationMetadataMapper;
+
+    @MockBean
+    private ConversationService conversationService;
 
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();

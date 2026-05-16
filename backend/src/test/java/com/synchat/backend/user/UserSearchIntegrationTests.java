@@ -25,6 +25,8 @@ import com.synchat.backend.sync.repository.UserEventOffsetRepository;
 import com.synchat.backend.user.entity.UserEntity;
 import com.synchat.backend.user.repository.UserRepository;
 import com.synchat.backend.conversation.service.ConversationMetadataMapper;
+import com.synchat.backend.conversation.service.ConversationService;
+
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
@@ -85,6 +87,9 @@ class UserSearchIntegrationTests {
 
     @MockBean
     private ConversationMetadataMapper conversationMetadataMapper;
+
+    @MockBean
+    private ConversationService conversationService;
 
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
