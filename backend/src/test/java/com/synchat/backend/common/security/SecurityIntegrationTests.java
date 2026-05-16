@@ -20,6 +20,7 @@ import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.conversation.service.ConversationService;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
+import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
 import com.synchat.backend.sync.service.SyncService;
@@ -90,6 +91,9 @@ class SecurityIntegrationTests {
 
     @MockBean
     private SyncService syncService;
+
+    @MockBean
+    private MessagePaginationService messagePaginationService;
 
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
