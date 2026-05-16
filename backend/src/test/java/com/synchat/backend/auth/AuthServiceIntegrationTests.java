@@ -20,6 +20,7 @@ import com.synchat.backend.auth.repository.UserCredentialRepository;
 import com.synchat.backend.auth.service.AuthService;
 import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
+import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
@@ -76,6 +77,9 @@ class AuthServiceIntegrationTests {
     @MockBean
     private AuthSessionRepository authSessionRepository;
 
+    @MockBean
+    private ConversationMetadataMapper conversationMetadataMapper;
+
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
     private final Map<UUID, UserCredentialEntity> credentialsByUserId = new HashMap<>();
@@ -92,8 +96,10 @@ class AuthServiceIntegrationTests {
         devicesById.clear();
         sessionsById.clear();
 
-        when(userRepository.existsByEmail(any())).thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
-        when(userRepository.findByEmail(any())).thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
+        when(userRepository.existsByEmail(any()))
+                .thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
+        when(userRepository.findByEmail(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
         when(userRepository.save(any())).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
             usersById.put(user.getId(), user);
@@ -102,8 +108,7 @@ class AuthServiceIntegrationTests {
         });
 
         when(userCredentialRepository.findById(any())).thenAnswer(
-                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0)))
-        );
+                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0))));
         when(userCredentialRepository.save(any())).thenAnswer(invocation -> {
             UserCredentialEntity credential = invocation.getArgument(0);
             credentialsByUserId.put(credential.getUserId(), credential);
@@ -116,7 +121,8 @@ class AuthServiceIntegrationTests {
             return offset;
         });
 
-        when(deviceRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
+        when(deviceRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
         when(deviceRepository.save(any())).thenAnswer(invocation -> {
             DeviceEntity device = invocation.getArgument(0);
             devicesById.put(device.getId(), device);
@@ -159,9 +165,8 @@ class AuthServiceIntegrationTests {
         authService.register(request);
 
         assertThatThrownBy(() -> authService.register(request))
-                .isInstanceOfSatisfying(AppException.class, exception ->
-                        assertThat(exception.getCode()).isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS)
-                );
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS));
     }
 
     @Test
@@ -169,7 +174,8 @@ class AuthServiceIntegrationTests {
         authService.register(new RegisterRequest("user@example.com", "password123", "Test User"));
         UUID deviceId = UUID.randomUUID();
 
-        LoginResponse response = authService.login(new LoginRequest("user@example.com", "password123", deviceId, "ios"));
+        LoginResponse response = authService
+                .login(new LoginRequest("user@example.com", "password123", deviceId, "ios"));
 
         assertThat(response.accessToken()).isNotBlank();
         assertThat(response.refreshToken()).isNotBlank();
@@ -193,9 +199,8 @@ class AuthServiceIntegrationTests {
         assertThat(refresh.refreshToken()).isNotBlank();
         assertThat(refresh.refreshToken()).isNotEqualTo(login.refreshToken());
         assertThatThrownBy(() -> authService.refresh(new RefreshSessionRequest(login.refreshToken(), deviceId)))
-                .isInstanceOfSatisfying(AppException.class, exception ->
-                        assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED)
-                );
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
     }
 
     @Test
@@ -209,9 +214,8 @@ class AuthServiceIntegrationTests {
         AuthSessionEntity session = sessionsById.values().iterator().next();
         assertThat(session.getRevokedAt()).isNotNull();
         assertThatThrownBy(() -> authService.refresh(new RefreshSessionRequest(login.refreshToken(), deviceId)))
-                .isInstanceOfSatisfying(AppException.class, exception ->
-                        assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED)
-                );
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
     }
 
     @TestConfiguration

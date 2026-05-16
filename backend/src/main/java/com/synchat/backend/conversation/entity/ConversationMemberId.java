@@ -17,6 +17,14 @@ public class ConversationMemberId implements Serializable {
         this.userId = userId;
     }
 
+    public UUID getConversationId() {
+        return conversationId;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {

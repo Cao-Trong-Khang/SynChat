@@ -16,6 +16,7 @@ import com.synchat.backend.auth.entity.UserCredentialEntity;
 import com.synchat.backend.auth.repository.AuthSessionRepository;
 import com.synchat.backend.auth.repository.UserCredentialRepository;
 import com.synchat.backend.auth.service.AuthService;
+import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
@@ -79,6 +80,9 @@ class SecurityIntegrationTests {
     @MockBean
     private AuthSessionRepository authSessionRepository;
 
+    @MockBean
+    private ConversationMetadataMapper conversationMetadataMapper;
+
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
     private final Map<UUID, UserCredentialEntity> credentialsByUserId = new HashMap<>();
@@ -95,8 +99,10 @@ class SecurityIntegrationTests {
         devicesById.clear();
         sessionsById.clear();
 
-        when(userRepository.existsByEmail(any())).thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
-        when(userRepository.findByEmail(any())).thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
+        when(userRepository.existsByEmail(any()))
+                .thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
+        when(userRepository.findByEmail(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
         when(userRepository.save(any())).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
             usersById.put(user.getId(), user);
@@ -105,8 +111,7 @@ class SecurityIntegrationTests {
         });
 
         when(userCredentialRepository.findById(any())).thenAnswer(
-                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0)))
-        );
+                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0))));
         when(userCredentialRepository.save(any())).thenAnswer(invocation -> {
             UserCredentialEntity credential = invocation.getArgument(0);
             credentialsByUserId.put(credential.getUserId(), credential);
@@ -119,14 +124,16 @@ class SecurityIntegrationTests {
             return offset;
         });
 
-        when(deviceRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
+        when(deviceRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
         when(deviceRepository.save(any())).thenAnswer(invocation -> {
             DeviceEntity device = invocation.getArgument(0);
             devicesById.put(device.getId(), device);
             return device;
         });
 
-        when(authSessionRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(sessionsById.get(invocation.getArgument(0))));
+        when(authSessionRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(sessionsById.get(invocation.getArgument(0))));
         when(authSessionRepository.findByRefreshTokenHashAndDeviceId(any(), any())).thenAnswer(invocation -> {
             String refreshTokenHash = invocation.getArgument(0);
             UUID deviceId = invocation.getArgument(1);
@@ -161,7 +168,7 @@ class SecurityIntegrationTests {
     @Test
     void protectedWithInvalidTokenReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/test/protected")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-valid-token"))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-valid-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code", is("UNAUTHORIZED")))
                 .andExpect(jsonPath("$.error.message", is("Unauthorized.")));
@@ -174,7 +181,7 @@ class SecurityIntegrationTests {
         LoginResponse login = authService.login(new LoginRequest("user@example.com", "password123", deviceId, "ios"));
 
         mockMvc.perform(get("/api/test/protected")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId", is(login.user().id().toString())))
                 .andExpect(jsonPath("$.deviceId", is(deviceId.toString())));
@@ -189,7 +196,7 @@ class SecurityIntegrationTests {
         authService.logout(new LogoutRequest(login.refreshToken(), deviceId));
 
         mockMvc.perform(get("/api/test/protected")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code", is("UNAUTHORIZED")))
                 .andExpect(jsonPath("$.error.message", is("Unauthorized.")));
@@ -237,8 +244,7 @@ class SecurityIntegrationTests {
             return Map.of(
                     "userId", currentUser.userId().toString(),
                     "sessionId", currentUser.sessionId().toString(),
-                    "deviceId", currentUser.deviceId().toString()
-            );
+                    "deviceId", currentUser.deviceId().toString());
         }
     }
 }

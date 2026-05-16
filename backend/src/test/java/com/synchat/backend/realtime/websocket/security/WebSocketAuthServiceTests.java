@@ -17,6 +17,7 @@ import com.synchat.backend.auth.service.AuthService;
 import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.common.security.AuthPrincipal;
+import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
@@ -74,6 +75,9 @@ class WebSocketAuthServiceTests {
     @MockBean
     private AuthSessionRepository authSessionRepository;
 
+    @MockBean
+    private ConversationMetadataMapper conversationMetadataMapper;
+
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
     private final Map<UUID, UserCredentialEntity> credentialsByUserId = new HashMap<>();
@@ -90,8 +94,10 @@ class WebSocketAuthServiceTests {
         devicesById.clear();
         sessionsById.clear();
 
-        when(userRepository.existsByEmail(any())).thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
-        when(userRepository.findByEmail(any())).thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
+        when(userRepository.existsByEmail(any()))
+                .thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
+        when(userRepository.findByEmail(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
         when(userRepository.save(any())).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
             usersById.put(user.getId(), user);
@@ -100,8 +106,7 @@ class WebSocketAuthServiceTests {
         });
 
         when(userCredentialRepository.findById(any())).thenAnswer(
-                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0)))
-        );
+                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0))));
         when(userCredentialRepository.save(any())).thenAnswer(invocation -> {
             UserCredentialEntity credential = invocation.getArgument(0);
             credentialsByUserId.put(credential.getUserId(), credential);
@@ -114,14 +119,16 @@ class WebSocketAuthServiceTests {
             return offset;
         });
 
-        when(deviceRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
+        when(deviceRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
         when(deviceRepository.save(any())).thenAnswer(invocation -> {
             DeviceEntity device = invocation.getArgument(0);
             devicesById.put(device.getId(), device);
             return device;
         });
 
-        when(authSessionRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(sessionsById.get(invocation.getArgument(0))));
+        when(authSessionRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(sessionsById.get(invocation.getArgument(0))));
         when(authSessionRepository.findByRefreshTokenHashAndDeviceId(any(), any())).thenAnswer(invocation -> {
             String refreshTokenHash = invocation.getArgument(0);
             UUID deviceId = invocation.getArgument(1);
@@ -154,9 +161,8 @@ class WebSocketAuthServiceTests {
         LoginFixture fixture = registerAndLogin();
 
         assertThatThrownBy(() -> webSocketAuthService.authenticate(fixture.login.accessToken(), UUID.randomUUID()))
-                .isInstanceOfSatisfying(AppException.class, exception ->
-                        assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED)
-                );
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
     }
 
     @Test
@@ -164,9 +170,8 @@ class WebSocketAuthServiceTests {
         LoginFixture fixture = registerAndLogin();
 
         assertThatThrownBy(() -> webSocketAuthService.authenticate("not-a-valid-token", fixture.deviceId))
-                .isInstanceOfSatisfying(AppException.class, exception ->
-                        assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED)
-                );
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
     }
 
     @Test
@@ -176,9 +181,8 @@ class WebSocketAuthServiceTests {
         authService.logout(new LogoutRequest(fixture.login.refreshToken(), fixture.deviceId));
 
         assertThatThrownBy(() -> webSocketAuthService.authenticate(fixture.login.accessToken(), fixture.deviceId))
-                .isInstanceOfSatisfying(AppException.class, exception ->
-                        assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED)
-                );
+                .isInstanceOfSatisfying(AppException.class,
+                        exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
     }
 
     private LoginFixture registerAndLogin() {

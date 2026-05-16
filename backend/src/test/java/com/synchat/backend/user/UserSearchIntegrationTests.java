@@ -24,6 +24,7 @@ import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
 import com.synchat.backend.user.entity.UserEntity;
 import com.synchat.backend.user.repository.UserRepository;
+import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
@@ -82,6 +83,9 @@ class UserSearchIntegrationTests {
     @MockBean
     private AuthSessionRepository authSessionRepository;
 
+    @MockBean
+    private ConversationMetadataMapper conversationMetadataMapper;
+
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
     private final Map<UUID, UserCredentialEntity> credentialsByUserId = new HashMap<>();
@@ -98,8 +102,10 @@ class UserSearchIntegrationTests {
         devicesById.clear();
         sessionsById.clear();
 
-        when(userRepository.existsByEmail(any())).thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
-        when(userRepository.findByEmail(any())).thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
+        when(userRepository.existsByEmail(any()))
+                .thenAnswer(invocation -> usersByEmail.containsKey(invocation.getArgument(0)));
+        when(userRepository.findByEmail(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(usersByEmail.get(invocation.getArgument(0))));
         when(userRepository.save(any())).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
             usersById.put(user.getId(), user);
@@ -124,8 +130,7 @@ class UserSearchIntegrationTests {
         });
 
         when(userCredentialRepository.findById(any())).thenAnswer(
-                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0)))
-        );
+                invocation -> Optional.ofNullable(credentialsByUserId.get(invocation.getArgument(0))));
         when(userCredentialRepository.save(any())).thenAnswer(invocation -> {
             UserCredentialEntity credential = invocation.getArgument(0);
             credentialsByUserId.put(credential.getUserId(), credential);
@@ -138,14 +143,16 @@ class UserSearchIntegrationTests {
             return offset;
         });
 
-        when(deviceRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
+        when(deviceRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(devicesById.get(invocation.getArgument(0))));
         when(deviceRepository.save(any())).thenAnswer(invocation -> {
             DeviceEntity device = invocation.getArgument(0);
             devicesById.put(device.getId(), device);
             return device;
         });
 
-        when(authSessionRepository.findById(any())).thenAnswer(invocation -> Optional.ofNullable(sessionsById.get(invocation.getArgument(0))));
+        when(authSessionRepository.findById(any()))
+                .thenAnswer(invocation -> Optional.ofNullable(sessionsById.get(invocation.getArgument(0))));
         when(authSessionRepository.findByRefreshTokenHashAndDeviceId(any(), any())).thenAnswer(invocation -> {
             String refreshTokenHash = invocation.getArgument(0);
             UUID deviceId = invocation.getArgument(1);
@@ -179,8 +186,8 @@ class UserSearchIntegrationTests {
         LoginResponse aliceLogin = login(aliceEmail);
 
         mockMvc.perform(get("/api/users/search")
-                        .param("q", "bo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + aliceLogin.accessToken()))
+                .param("q", "bo")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + aliceLogin.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[*].email", hasItem(bobEmail)))
                 .andExpect(jsonPath("$.items[0].id").exists())
@@ -197,8 +204,8 @@ class UserSearchIntegrationTests {
         LoginResponse aliceLogin = login(aliceEmail);
 
         mockMvc.perform(get("/api/users/search")
-                        .param("q", "alice")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + aliceLogin.accessToken()))
+                .param("q", "alice")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + aliceLogin.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[*].email", everyItem(not(containsString(aliceEmail)))));
     }
@@ -208,8 +215,8 @@ class UserSearchIntegrationTests {
         LoginResponse login = registeredLogin();
 
         mockMvc.perform(get("/api/users/search")
-                        .param("q", "")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
+                .param("q", "")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
@@ -219,8 +226,8 @@ class UserSearchIntegrationTests {
         LoginResponse login = registeredLogin();
 
         mockMvc.perform(get("/api/users/search")
-                        .param("q", "a")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
+                .param("q", "a")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + login.accessToken()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
