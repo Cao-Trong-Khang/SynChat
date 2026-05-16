@@ -2,6 +2,7 @@ package com.synchat.backend.auth.service;
 
 import com.synchat.backend.auth.dto.LoginRequest;
 import com.synchat.backend.auth.dto.LoginResponse;
+import com.synchat.backend.auth.dto.LogoutRequest;
 import com.synchat.backend.auth.dto.RegisterRequest;
 import com.synchat.backend.auth.dto.RefreshSessionRequest;
 import com.synchat.backend.auth.dto.RefreshSessionResponse;
@@ -169,6 +170,20 @@ public class AuthService {
                 newRefreshToken,
                 newRefreshTokenExpiresAt
         );
+    }
+
+    @Transactional
+    public SuccessResponse logout(LogoutRequest request) {
+        String refreshTokenHash = refreshTokenService.hashRefreshToken(request.refreshToken());
+
+        authSessionRepository.findByRefreshTokenHashAndDeviceId(refreshTokenHash, request.deviceId())
+                .filter(session -> session.getRevokedAt() == null)
+                .ifPresent(session -> {
+                    session.revoke(Instant.now());
+                    // TODO: close active websocket sessions for this auth session when realtime gateway is implemented.
+                });
+
+        return new SuccessResponse(true);
     }
 
     private AppException invalidCredentials() {

@@ -2,6 +2,7 @@ package com.synchat.backend.auth.controller;
 
 import com.synchat.backend.auth.dto.LoginRequest;
 import com.synchat.backend.auth.dto.LoginResponse;
+import com.synchat.backend.auth.dto.LogoutRequest;
 import com.synchat.backend.auth.dto.RegisterRequest;
 import com.synchat.backend.auth.dto.RefreshSessionRequest;
 import com.synchat.backend.auth.dto.RefreshSessionResponse;
@@ -36,5 +37,10 @@ public class AuthController {
     @PostMapping("/refresh")
     public RefreshSessionResponse refresh(@Valid @RequestBody RefreshSessionRequest request) {
         return authService.refresh(request);
+    }
+
+    @PostMapping("/logout")
+    public SuccessResponse logout(@Valid @RequestBody LogoutRequest request) {
+        return authService.logout(request);
     }
 }
