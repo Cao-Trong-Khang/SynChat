@@ -22,6 +22,7 @@ import com.synchat.backend.conversation.service.ConversationService;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.message.service.MessagePaginationService;
+import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
@@ -120,6 +121,9 @@ class WebSocketGatewayIntegrationTests {
 
     @MockBean
     private MessagePaginationService messagePaginationService;
+
+    @MockBean
+    private MessageSendService messageSendService;
 
     @MockBean
     private UserService userService;

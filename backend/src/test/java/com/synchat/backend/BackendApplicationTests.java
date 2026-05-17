@@ -5,6 +5,7 @@ import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.conversation.service.ConversationService;
 import com.synchat.backend.message.service.MessageCreatedPayloadBuilder;
 import com.synchat.backend.message.service.MessagePaginationService;
+import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.service.SyncService;
 import com.synchat.backend.sync.service.UserEventAppender;
@@ -37,6 +38,9 @@ class BackendApplicationTests {
 
     @MockBean
     private MessagePaginationService messagePaginationService;
+
+    @MockBean
+    private MessageSendService messageSendService;
 
     @MockBean
     private SyncService syncService;

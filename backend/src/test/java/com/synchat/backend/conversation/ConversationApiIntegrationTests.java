@@ -29,6 +29,7 @@ import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.message.entity.MessageEntity;
 import com.synchat.backend.message.repository.MessageRepository;
+import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
@@ -108,6 +109,9 @@ class ConversationApiIntegrationTests {
 
     @MockBean
     private SyncService syncService;
+
+    @MockBean
+    private MessageSendService messageSendService;
 
     @MockBean
     private OutboxEventAppender outboxEventAppender;
