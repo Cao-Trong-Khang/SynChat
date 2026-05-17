@@ -22,9 +22,11 @@ import com.synchat.backend.conversation.service.ConversationService;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.message.service.MessagePaginationService;
+import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
 import com.synchat.backend.sync.service.SyncService;
+import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.user.entity.UserEntity;
 import com.synchat.backend.user.repository.UserRepository;
 import com.synchat.backend.user.service.UserService;
@@ -121,6 +123,12 @@ class WebSocketGatewayIntegrationTests {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private OutboxEventAppender outboxEventAppender;
+
+    @MockBean
+    private UserEventAppender userEventAppender;
 
     @SuppressWarnings("unchecked")
     private final ValueOperations<String, String> valueOperations = org.mockito.Mockito.mock(ValueOperations.class);

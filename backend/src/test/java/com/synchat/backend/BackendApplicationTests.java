@@ -4,7 +4,9 @@ import com.synchat.backend.auth.service.AuthService;
 import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.conversation.service.ConversationService;
 import com.synchat.backend.message.service.MessagePaginationService;
+import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.service.SyncService;
+import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.common.security.SessionValidator;
 import com.synchat.backend.user.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,12 @@ class BackendApplicationTests {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private OutboxEventAppender outboxEventAppender;
+
+    @MockBean
+    private UserEventAppender userEventAppender;
 
     @Test
     void contextLoads() {
