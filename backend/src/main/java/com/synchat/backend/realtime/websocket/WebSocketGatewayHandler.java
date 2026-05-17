@@ -10,7 +10,10 @@ import com.synchat.backend.realtime.websocket.security.WebSocketAuthAttributes;
 import com.synchat.backend.realtime.websocket.session.UserSessionBinding;
 import com.synchat.backend.realtime.websocket.session.WebSocketSessionRegistry;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -70,7 +73,7 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
         }
 
         try {
-            commandRouter.route(binding.get(), envelope);
+            routeAuthenticated(binding.get(), envelope);
         } catch (AppException exception) {
             errorSender.sendError(session, envelope.requestId(), exception);
         } catch (Exception exception) {
@@ -80,6 +83,22 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
                     ErrorCode.INTERNAL_ERROR,
                     "Unexpected server error."
             );
+        }
+    }
+
+    private void routeAuthenticated(UserSessionBinding binding, WebSocketCommandEnvelope envelope) {
+        AuthPrincipal principal = new AuthPrincipal(binding.userId(), binding.sessionId(), binding.deviceId());
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of()
+        );
+
+        try {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            commandRouter.route(binding, envelope);
+        } finally {
+            SecurityContextHolder.clearContext();
         }
     }
 
