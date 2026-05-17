@@ -3,6 +3,7 @@ package com.synchat.backend;
 import com.synchat.backend.auth.service.AuthService;
 import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.conversation.service.ConversationService;
+import com.synchat.backend.message.service.MessageCreatedPayloadBuilder;
 import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.service.SyncService;
@@ -54,6 +55,9 @@ class BackendApplicationTests {
 
     @MockBean
     private UserEventAppender userEventAppender;
+
+    @MockBean
+    private MessageCreatedPayloadBuilder messageCreatedPayloadBuilder;
 
     @Test
     void contextLoads() {
