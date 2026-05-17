@@ -53,6 +53,18 @@ public class MessageEntity {
         this.createdAtServer = createdAtServer;
     }
 
+    public static MessageEntity create(
+            UUID id,
+            UUID conversationId,
+            Long seq,
+            UUID senderId,
+            UUID clientMessageId,
+            String body,
+            Instant createdAtServer
+    ) {
+        return new MessageEntity(id, conversationId, seq, senderId, clientMessageId, body, createdAtServer);
+    }
+
     public UUID getId() {
         return id;
     }

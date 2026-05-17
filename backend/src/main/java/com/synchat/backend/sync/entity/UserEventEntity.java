@@ -41,6 +41,16 @@ public class UserEventEntity {
         this.createdAt = createdAt;
     }
 
+    public static UserEventEntity create(
+            UUID userId,
+            Long eventSeq,
+            String eventType,
+            String payload,
+            Instant createdAt
+    ) {
+        return new UserEventEntity(userId, eventSeq, eventType, payload, createdAt);
+    }
+
     public UUID getUserId() {
         return userId;
     }

@@ -48,6 +48,16 @@ public class ConversationEntity {
         this.updatedAt = updatedAt;
     }
 
+    public static ConversationEntity create(UUID id, String directKey, Instant now) {
+        return new ConversationEntity(id, directKey, 0L, null, now, now);
+    }
+
+    public void applyLastMessage(Long seq, Instant messageCreatedAt) {
+        this.lastMessageSeq = seq;
+        this.lastMessageAt = messageCreatedAt;
+        this.updatedAt = messageCreatedAt;
+    }
+
     public UUID getId() {
         return id;
     }

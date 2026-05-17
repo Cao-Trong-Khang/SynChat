@@ -34,6 +34,16 @@ public class UserEventOffsetEntity {
         return new UserEventOffsetEntity(userId, 0L, now);
     }
 
+    public Long incrementAndGet() {
+        return incrementAndGet(Instant.now());
+    }
+
+    public Long incrementAndGet(Instant now) {
+        this.lastEventSeq += 1;
+        this.updatedAt = now;
+        return this.lastEventSeq;
+    }
+
     public UUID getUserId() {
         return userId;
     }

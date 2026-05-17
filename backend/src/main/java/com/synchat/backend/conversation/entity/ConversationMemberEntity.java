@@ -57,6 +57,24 @@ public class ConversationMemberEntity {
         this.updatedAt = updatedAt;
     }
 
+    public static ConversationMemberEntity create(UUID conversationId, UUID userId, Instant now) {
+        return new ConversationMemberEntity(conversationId, userId, 0L, 0L, 0, now, now);
+    }
+
+    public void incrementUnread(Instant now) {
+        this.unreadCount += 1;
+        this.updatedAt = now;
+    }
+
+    public void clearUnread(Instant now) {
+        this.unreadCount = 0;
+        this.updatedAt = now;
+    }
+
+    public void touch(Instant now) {
+        this.updatedAt = now;
+    }
+
     public UUID getConversationId() {
         return conversationId;
     }

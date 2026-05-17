@@ -37,6 +37,16 @@ public class OutboxEventEntity {
         this.createdAt = createdAt;
     }
 
+    public static OutboxEventEntity create(
+            UUID id,
+            String eventType,
+            String payload,
+            String status,
+            Instant createdAt
+    ) {
+        return new OutboxEventEntity(id, eventType, payload, status, createdAt);
+    }
+
     public UUID getId() {
         return id;
     }
