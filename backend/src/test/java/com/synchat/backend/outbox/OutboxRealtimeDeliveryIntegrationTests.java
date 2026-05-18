@@ -54,7 +54,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
-import com.synchat.backend.realtime.typing.service.TypingExpirationNotifier;
+import com.synchat.backend.realtime.typing.service.TypingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -96,7 +96,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 class OutboxRealtimeDeliveryIntegrationTests {
 
     @MockBean
-    private TypingExpirationNotifier typingExpirationNotifier;
+    private TypingService typingService;
 
     private static final Duration TIMEOUT = Duration.ofSeconds(3);
 

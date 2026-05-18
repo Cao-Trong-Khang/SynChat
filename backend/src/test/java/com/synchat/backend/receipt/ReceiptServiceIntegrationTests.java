@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import com.synchat.backend.realtime.typing.service.TypingExpirationNotifier;
+import com.synchat.backend.realtime.typing.service.TypingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,7 +79,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 class ReceiptServiceIntegrationTests {
 
     @MockBean
-    private TypingExpirationNotifier typingExpirationNotifier;
+    private TypingService typingService;
 
     @Autowired
     private AuthService authService;

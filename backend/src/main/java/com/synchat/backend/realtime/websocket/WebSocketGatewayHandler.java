@@ -5,6 +5,7 @@ import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.common.security.AuthPrincipal;
 import com.synchat.backend.realtime.presence.service.PresenceService;
+import com.synchat.backend.realtime.typing.service.TypingService;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandRouter;
 import com.synchat.backend.realtime.websocket.dto.WebSocketCommandEnvelope;
 import com.synchat.backend.realtime.websocket.security.WebSocketAuthAttributes;
@@ -14,6 +15,8 @@ import com.synchat.backend.realtime.websocket.session.WebSocketSessionRegistry;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -25,12 +28,15 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Component
 public class WebSocketGatewayHandler extends TextWebSocketHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(WebSocketGatewayHandler.class);
+
     private final ObjectMapper objectMapper;
     private final WebSocketSessionRegistry sessionRegistry;
     private final WebSocketConnectionStore connectionStore;
     private final WebSocketCommandRouter commandRouter;
     private final WebSocketErrorSender errorSender;
     private final PresenceService presenceService;
+    private final TypingService typingService;
 
     public WebSocketGatewayHandler(
             ObjectMapper objectMapper,
@@ -38,7 +44,8 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
             WebSocketConnectionStore connectionStore,
             WebSocketCommandRouter commandRouter,
             WebSocketErrorSender errorSender,
-            PresenceService presenceService
+            PresenceService presenceService,
+            TypingService typingService
     ) {
         this.objectMapper = objectMapper;
         this.sessionRegistry = sessionRegistry;
@@ -46,6 +53,7 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
         this.commandRouter = commandRouter;
         this.errorSender = errorSender;
         this.presenceService = presenceService;
+        this.typingService = typingService;
     }
 
     @Override
@@ -119,7 +127,7 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
         Optional<UserSessionBinding> binding = sessionRegistry.findBySocketId(session.getId());
         sessionRegistry.unregister(session.getId());
         connectionStore.unregister(session.getId());
-        binding.ifPresent(presenceService::handleSocketDisconnected);
+        cleanupDisconnectedBinding(binding);
     }
 
     @Override
@@ -127,8 +135,19 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
         Optional<UserSessionBinding> binding = sessionRegistry.findBySocketId(session.getId());
         sessionRegistry.unregister(session.getId());
         connectionStore.unregister(session.getId());
-        binding.ifPresent(presenceService::handleSocketDisconnected);
+        cleanupDisconnectedBinding(binding);
         closeIfOpen(session);
+    }
+
+    private void cleanupDisconnectedBinding(Optional<UserSessionBinding> binding) {
+        binding.ifPresent(value -> {
+            try {
+                typingService.handleSocketDisconnected(value);
+            } catch (Exception exception) {
+                log.warn("Failed to clean up typing state for websocket session.", exception);
+            }
+            presenceService.handleSocketDisconnected(value);
+        });
     }
 
     private void closeIfOpen(WebSocketSession session) throws IOException {

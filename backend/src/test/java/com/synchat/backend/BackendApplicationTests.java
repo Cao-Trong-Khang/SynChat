@@ -15,7 +15,7 @@ import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.common.security.SessionValidator;
 import com.synchat.backend.user.service.UserService;
 import com.synchat.backend.device.service.DeviceService;
-import com.synchat.backend.realtime.typing.service.TypingExpirationNotifier;
+import com.synchat.backend.realtime.typing.service.TypingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -36,7 +36,7 @@ import org.springframework.test.context.ActiveProfiles;
 class BackendApplicationTests {
 
     @MockBean
-    private TypingExpirationNotifier typingExpirationNotifier;
+    private TypingService typingService;
 
     @MockBean
     private AuthService authService;
