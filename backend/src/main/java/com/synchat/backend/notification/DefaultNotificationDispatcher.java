@@ -2,6 +2,7 @@ package com.synchat.backend.notification;
 
 import com.synchat.backend.device.model.PushProviders;
 import com.synchat.backend.notification.fcm.FcmClient;
+import com.synchat.backend.notification.model.DeviceRuntimeStates;
 import com.synchat.backend.notification.model.MessageCreatedNotificationData;
 import com.synchat.backend.notification.model.PushCandidate;
 import com.synchat.backend.notification.model.PushNotificationRequest;
@@ -56,7 +57,7 @@ public class DefaultNotificationDispatcher implements NotificationDispatcher {
     }
 
     private void dispatchToCandidate(MessageCreatedNotificationData notificationData, PushCandidate candidate) {
-        if (!PushProviders.FCM.equals(candidate.pushProvider())) {
+        if (!shouldPush(candidate)) {
             return;
         }
 
@@ -83,5 +84,18 @@ public class DefaultNotificationDispatcher implements NotificationDispatcher {
                     exception
             );
         }
+    }
+
+    private boolean shouldPush(PushCandidate candidate) {
+        if (candidate.pushToken() == null || candidate.pushToken().isBlank()) {
+            return false;
+        }
+        if (!PushProviders.FCM.equals(candidate.pushProvider())) {
+            return false;
+        }
+        if (!candidate.online()) {
+            return true;
+        }
+        return DeviceRuntimeStates.BACKGROUND.equals(candidate.runtimeState());
     }
 }
