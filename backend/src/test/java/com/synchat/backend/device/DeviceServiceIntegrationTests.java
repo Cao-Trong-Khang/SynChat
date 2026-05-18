@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import com.synchat.backend.realtime.typing.service.TypingExpirationNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +69,9 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 })
 @Transactional
 class DeviceServiceIntegrationTests {
+
+    @MockBean
+    private TypingExpirationNotifier typingExpirationNotifier;
 
     @Autowired
     private AuthService authService;

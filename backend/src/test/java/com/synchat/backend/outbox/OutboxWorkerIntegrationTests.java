@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import com.synchat.backend.realtime.typing.service.TypingExpirationNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,9 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 })
 @ActiveProfiles("test")
 class OutboxWorkerIntegrationTests {
+
+    @MockBean
+    private TypingExpirationNotifier typingExpirationNotifier;
 
     @Autowired
     private OutboxClaimService outboxClaimService;
