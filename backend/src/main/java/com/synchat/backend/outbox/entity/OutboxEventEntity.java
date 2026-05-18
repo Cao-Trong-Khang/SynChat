@@ -1,5 +1,6 @@
 package com.synchat.backend.outbox.entity;
 
+import com.synchat.backend.outbox.model.OutboxEventStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -65,5 +66,17 @@ public class OutboxEventEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void markProcessing() {
+        this.status = OutboxEventStatus.PROCESSING;
+    }
+
+    public void markPublished() {
+        this.status = OutboxEventStatus.PUBLISHED;
+    }
+
+    public void markFailed() {
+        this.status = OutboxEventStatus.FAILED;
     }
 }

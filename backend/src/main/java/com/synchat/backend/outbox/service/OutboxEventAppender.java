@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.outbox.entity.OutboxEventEntity;
+import com.synchat.backend.outbox.model.OutboxEventStatus;
 import com.synchat.backend.outbox.repository.OutboxEventRepository;
 import java.time.Instant;
 import java.util.UUID;
@@ -11,8 +12,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OutboxEventAppender {
-
-    public static final String STATUS_PENDING = "pending";
 
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
@@ -30,7 +29,7 @@ public class OutboxEventAppender {
                 id,
                 eventType,
                 jsonPayload,
-                STATUS_PENDING,
+                OutboxEventStatus.PENDING,
                 now
         ));
         return id;
