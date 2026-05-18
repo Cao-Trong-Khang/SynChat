@@ -8,6 +8,7 @@ import com.synchat.backend.realtime.websocket.command.WebSocketCommandRouter;
 import com.synchat.backend.realtime.websocket.dto.WebSocketCommandEnvelope;
 import com.synchat.backend.realtime.websocket.security.WebSocketAuthAttributes;
 import com.synchat.backend.realtime.websocket.session.UserSessionBinding;
+import com.synchat.backend.realtime.websocket.session.WebSocketConnectionStore;
 import com.synchat.backend.realtime.websocket.session.WebSocketSessionRegistry;
 import java.io.IOException;
 import java.util.List;
@@ -25,17 +26,20 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper;
     private final WebSocketSessionRegistry sessionRegistry;
+    private final WebSocketConnectionStore connectionStore;
     private final WebSocketCommandRouter commandRouter;
     private final WebSocketErrorSender errorSender;
 
     public WebSocketGatewayHandler(
             ObjectMapper objectMapper,
             WebSocketSessionRegistry sessionRegistry,
+            WebSocketConnectionStore connectionStore,
             WebSocketCommandRouter commandRouter,
             WebSocketErrorSender errorSender
     ) {
         this.objectMapper = objectMapper;
         this.sessionRegistry = sessionRegistry;
+        this.connectionStore = connectionStore;
         this.commandRouter = commandRouter;
         this.errorSender = errorSender;
     }
@@ -48,6 +52,7 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
             return;
         }
 
+        connectionStore.register(session);
         sessionRegistry.register(session.getId(), principal);
     }
 
@@ -105,11 +110,13 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessionRegistry.unregister(session.getId());
+        connectionStore.unregister(session.getId());
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         sessionRegistry.unregister(session.getId());
+        connectionStore.unregister(session.getId());
         closeIfOpen(session);
     }
 
