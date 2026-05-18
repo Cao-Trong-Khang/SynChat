@@ -21,6 +21,7 @@ import com.synchat.backend.outbox.service.OutboxClaimService;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.outbox.service.OutboxPublishService;
 import com.synchat.backend.receipt.service.ReceiptService;
+import com.synchat.backend.realtime.presence.service.PresenceService;
 import com.synchat.backend.realtime.websocket.RealtimeEventPublisher;
 import com.synchat.backend.sync.service.SyncService;
 import com.synchat.backend.sync.service.UserEventAppender;
@@ -112,6 +113,9 @@ class OutboxWorkerIntegrationTests {
 
     @MockBean
     private DeviceService deviceService;
+
+    @MockBean
+    private PresenceService presenceService;
 
     private final Map<UUID, OutboxEventEntity> eventsById = new HashMap<>();
 

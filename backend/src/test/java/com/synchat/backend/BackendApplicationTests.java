@@ -9,6 +9,7 @@ import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.repository.OutboxEventRepository;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.receipt.service.ReceiptService;
+import com.synchat.backend.realtime.presence.service.PresenceService;
 import com.synchat.backend.sync.service.SyncService;
 import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.common.security.SessionValidator;
@@ -74,6 +75,9 @@ class BackendApplicationTests {
 
     @MockBean
     private DeviceService deviceService;
+
+    @MockBean
+    private PresenceService presenceService;
 
     @Test
     void contextLoads() {
