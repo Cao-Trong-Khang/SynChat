@@ -43,6 +43,12 @@ app:
     batch-size: 50
     fixed-delay-ms: 1000
 
+  notification:
+    fcm:
+      enabled: ${FCM_ENABLED:false}
+      project-id: ${FIREBASE_PROJECT_ID:}
+      dry-run: ${FCM_DRY_RUN:true}
+
 logging:
   level:
     com.synchat.backend: DEBUG
