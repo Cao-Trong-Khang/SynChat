@@ -13,6 +13,7 @@ import com.synchat.backend.message.service.MessageCreatedPayloadBuilder;
 import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.notification.NotificationDispatcher;
+import com.synchat.backend.notification.service.MessageCreatedNotificationParser;
 import com.synchat.backend.notification.service.PushCandidateResolver;
 import com.synchat.backend.outbox.entity.OutboxEventEntity;
 import com.synchat.backend.outbox.model.OutboxEventStatus;
@@ -124,6 +125,9 @@ class OutboxWorkerIntegrationTests {
 
     @MockBean
     private PushCandidateResolver pushCandidateResolver;
+
+    @MockBean
+    private MessageCreatedNotificationParser messageCreatedNotificationParser;
 
     private final Map<UUID, OutboxEventEntity> eventsById = new HashMap<>();
 
