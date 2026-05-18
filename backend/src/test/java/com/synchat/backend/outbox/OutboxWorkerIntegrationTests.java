@@ -8,6 +8,7 @@ import com.synchat.backend.auth.service.AuthService;
 import com.synchat.backend.common.security.SessionValidator;
 import com.synchat.backend.conversation.service.ConversationMetadataMapper;
 import com.synchat.backend.conversation.service.ConversationService;
+import com.synchat.backend.device.service.DeviceService;
 import com.synchat.backend.message.service.MessageCreatedPayloadBuilder;
 import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.message.service.MessageSendService;
@@ -108,6 +109,9 @@ class OutboxWorkerIntegrationTests {
 
     @MockBean
     private ReceiptService receiptService;
+
+    @MockBean
+    private DeviceService deviceService;
 
     private final Map<UUID, OutboxEventEntity> eventsById = new HashMap<>();
 

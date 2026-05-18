@@ -13,6 +13,7 @@ import com.synchat.backend.sync.service.SyncService;
 import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.common.security.SessionValidator;
 import com.synchat.backend.user.service.UserService;
+import com.synchat.backend.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -70,6 +71,9 @@ class BackendApplicationTests {
 
     @MockBean
     private ReceiptService receiptService;
+
+    @MockBean
+    private DeviceService deviceService;
 
     @Test
     void contextLoads() {
