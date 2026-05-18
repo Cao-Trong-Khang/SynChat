@@ -5,3 +5,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+
+app:
+  outbox:
+    enabled: false
+    batch-size: 50
+    fixed-delay-ms: 1000
