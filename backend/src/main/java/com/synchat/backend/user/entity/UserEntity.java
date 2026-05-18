@@ -57,6 +57,11 @@ public class UserEntity {
         return new UserEntity(id, email, displayName, avatarUrl, null, now, now);
     }
 
+    public void markLastSeenAt(Instant lastSeenAt) {
+        this.lastSeenAt = lastSeenAt;
+        this.updatedAt = lastSeenAt;
+    }
+
     public UUID getId() {
         return id;
     }
