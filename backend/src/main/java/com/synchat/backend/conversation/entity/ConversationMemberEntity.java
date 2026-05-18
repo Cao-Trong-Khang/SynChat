@@ -75,6 +75,36 @@ public class ConversationMemberEntity {
         this.updatedAt = now;
     }
 
+    public boolean updateDeliveredSeq(Long deliveredSeq, Instant now) {
+        if (deliveredSeq == null) {
+            return false;
+        }
+        if (this.deliveredSeq == null || deliveredSeq > this.deliveredSeq) {
+            this.deliveredSeq = deliveredSeq;
+            this.updatedAt = now;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean updateReadSeqAndClearUnread(Long readSeq, Instant now) {
+        if (readSeq == null) {
+            return false;
+        }
+        if (this.readSeq == null || readSeq > this.readSeq) {
+            this.readSeq = readSeq;
+            this.unreadCount = 0;
+            this.updatedAt = now;
+            return true;
+        }
+        if (this.unreadCount != null && this.unreadCount > 0) {
+            this.unreadCount = 0;
+            this.updatedAt = now;
+            return true;
+        }
+        return false;
+    }
+
     public UUID getConversationId() {
         return conversationId;
     }
