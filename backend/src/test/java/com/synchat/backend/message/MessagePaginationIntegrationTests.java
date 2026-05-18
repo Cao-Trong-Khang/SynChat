@@ -30,6 +30,7 @@ import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.message.entity.MessageEntity;
 import com.synchat.backend.message.repository.MessageRepository;
 import com.synchat.backend.message.service.MessageSendService;
+import com.synchat.backend.outbox.repository.OutboxEventRepository;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
@@ -118,6 +119,9 @@ class MessagePaginationIntegrationTests {
 
     @MockBean
     private OutboxEventAppender outboxEventAppender;
+
+    @MockBean
+    private OutboxEventRepository outboxEventRepository;
 
     @MockBean
     private UserEventAppender userEventAppender;
