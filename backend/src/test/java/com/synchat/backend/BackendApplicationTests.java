@@ -8,6 +8,7 @@ import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.repository.OutboxEventRepository;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
+import com.synchat.backend.receipt.service.ReceiptService;
 import com.synchat.backend.sync.service.SyncService;
 import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.common.security.SessionValidator;
@@ -66,6 +67,9 @@ class BackendApplicationTests {
 
     @MockBean
     private MessageCreatedPayloadBuilder messageCreatedPayloadBuilder;
+
+    @MockBean
+    private ReceiptService receiptService;
 
     @Test
     void contextLoads() {

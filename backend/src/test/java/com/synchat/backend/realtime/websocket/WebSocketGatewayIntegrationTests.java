@@ -25,6 +25,7 @@ import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.repository.OutboxEventRepository;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
+import com.synchat.backend.receipt.service.ReceiptService;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
 import com.synchat.backend.sync.service.SyncService;
@@ -137,6 +138,9 @@ class WebSocketGatewayIntegrationTests {
 
     @MockBean
     private UserEventAppender userEventAppender;
+
+    @MockBean
+    private ReceiptService receiptService;
 
     @SuppressWarnings("unchecked")
     private final ValueOperations<String, String> valueOperations = org.mockito.Mockito.mock(ValueOperations.class);
