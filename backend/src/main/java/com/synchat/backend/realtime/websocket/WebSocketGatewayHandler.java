@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.common.security.AuthPrincipal;
+import com.synchat.backend.realtime.presence.service.PresenceService;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandRouter;
 import com.synchat.backend.realtime.websocket.dto.WebSocketCommandEnvelope;
 import com.synchat.backend.realtime.websocket.security.WebSocketAuthAttributes;
@@ -29,19 +30,22 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
     private final WebSocketConnectionStore connectionStore;
     private final WebSocketCommandRouter commandRouter;
     private final WebSocketErrorSender errorSender;
+    private final PresenceService presenceService;
 
     public WebSocketGatewayHandler(
             ObjectMapper objectMapper,
             WebSocketSessionRegistry sessionRegistry,
             WebSocketConnectionStore connectionStore,
             WebSocketCommandRouter commandRouter,
-            WebSocketErrorSender errorSender
+            WebSocketErrorSender errorSender,
+            PresenceService presenceService
     ) {
         this.objectMapper = objectMapper;
         this.sessionRegistry = sessionRegistry;
         this.connectionStore = connectionStore;
         this.commandRouter = commandRouter;
         this.errorSender = errorSender;
+        this.presenceService = presenceService;
     }
 
     @Override
@@ -52,8 +56,11 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
             return;
         }
 
+        boolean wasUserOnline = !sessionRegistry.findByUserId(principal.userId()).isEmpty();
         connectionStore.register(session);
         sessionRegistry.register(session.getId(), principal);
+        sessionRegistry.findBySocketId(session.getId())
+                .ifPresent(binding -> presenceService.handleSocketConnected(binding, wasUserOnline));
     }
 
     @Override
@@ -109,14 +116,18 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        Optional<UserSessionBinding> binding = sessionRegistry.findBySocketId(session.getId());
         sessionRegistry.unregister(session.getId());
         connectionStore.unregister(session.getId());
+        binding.ifPresent(presenceService::handleSocketDisconnected);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        Optional<UserSessionBinding> binding = sessionRegistry.findBySocketId(session.getId());
         sessionRegistry.unregister(session.getId());
         connectionStore.unregister(session.getId());
+        binding.ifPresent(presenceService::handleSocketDisconnected);
         closeIfOpen(session);
     }
 
