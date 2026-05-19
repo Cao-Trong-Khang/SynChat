@@ -15,16 +15,24 @@ type ErrorResponse = {
   error?: ApiErrorPayload
 }
 
+const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh']
+
+function isPublicAuthPath(path: string) {
+  return PUBLIC_AUTH_PATHS.some((publicPath) => path === publicPath)
+}
+
 async function request<TResponse>(
   path: string,
   { body, headers, method = 'GET' }: RequestOptions = {},
 ): Promise<TResponse> {
   const tokens = getStoredTokens()
+  const shouldAttachAuth = tokens.accessToken && !isPublicAuthPath(path)
+
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     body: body === undefined ? undefined : JSON.stringify(body),
     headers: {
       'Content-Type': 'application/json',
-      ...(tokens.accessToken
+      ...(shouldAttachAuth
         ? { Authorization: `Bearer ${tokens.accessToken}` }
         : {}),
       ...headers,
