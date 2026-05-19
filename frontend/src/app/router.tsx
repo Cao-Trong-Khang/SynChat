@@ -6,21 +6,38 @@ import { ChatPage } from '@/pages/ChatPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 
+import { RedirectAuthenticated, RequireAuth } from './routeGuards'
+
 export const router = createBrowserRouter([
   {
-    path: '/login',
-    element: <AuthLayout />,
-    children: [{ index: true, element: <LoginPage /> }],
+    element: <RedirectAuthenticated />,
+    children: [
+      {
+        path: '/login',
+        element: <AuthLayout />,
+        children: [{ index: true, element: <LoginPage /> }],
+      },
+    ],
   },
   {
-    path: '/register',
-    element: <AuthLayout />,
-    children: [{ index: true, element: <RegisterPage /> }],
+    element: <RedirectAuthenticated />,
+    children: [
+      {
+      path: '/register',
+      element: <AuthLayout />,
+      children: [{ index: true, element: <RegisterPage /> }],
+      },
+    ],
   },
   {
-    path: '/chat',
-    element: <ChatLayout />,
-    children: [{ index: true, element: <ChatPage /> }],
+    element: <RequireAuth />,
+    children: [
+      {
+        path: '/chat',
+        element: <ChatLayout />,
+        children: [{ index: true, element: <ChatPage /> }],
+      },
+    ],
   },
   {
     path: '*',

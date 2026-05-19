@@ -3,9 +3,25 @@ import { getOrCreateDeviceId } from '@/features/device/deviceId'
 import { authApi } from './authApi'
 import type { LoginRequest, RegisterRequest } from './authTypes'
 import { useAuthStore } from './authStore'
-import { clearStoredTokens, getStoredTokens, storeTokens } from './tokenStorage'
+import {
+  clearStoredTokens,
+  getStoredAuthSession,
+  getStoredTokens,
+  storeAuthSession,
+} from './tokenStorage'
 
 export const authService = {
+  bootstrapAuth() {
+    const session = getStoredAuthSession()
+
+    if (!session?.accessToken) {
+      useAuthStore.getState().clearAuth()
+      return
+    }
+
+    useAuthStore.getState().restoreAuth(session.currentUser)
+  },
+
   async login(payload: Omit<LoginRequest, 'deviceId' | 'platform'>) {
     const response = await authApi.login({
       ...payload,
@@ -13,9 +29,10 @@ export const authService = {
       platform: 'web',
     })
 
-    storeTokens({
+    storeAuthSession({
       accessToken: response.accessToken,
       accessTokenExpiresAt: response.accessTokenExpiresAt,
+      currentUser: response.user,
       refreshToken: response.refreshToken,
       refreshTokenExpiresAt: response.refreshTokenExpiresAt,
     })
@@ -24,18 +41,26 @@ export const authService = {
     return response
   },
 
-  async logout() {
+  async logout(navigate?: (to: string, options?: { replace?: boolean }) => void) {
     const { refreshToken } = getStoredTokens()
 
-    if (refreshToken) {
-      await authApi.logout({
-        deviceId: getOrCreateDeviceId(),
-        refreshToken,
-      })
-    }
+    try {
+      if (refreshToken) {
+        await authApi.logout({
+          deviceId: getOrCreateDeviceId(),
+          refreshToken,
+        })
+      }
+    } finally {
+      clearStoredTokens()
+      useAuthStore.getState().clearAuth()
 
-    clearStoredTokens()
-    useAuthStore.getState().clearAuth()
+      if (navigate) {
+        navigate('/login', { replace: true })
+      } else if (window.location.pathname !== '/login') {
+        window.location.assign('/login')
+      }
+    }
   },
 
   register: (payload: RegisterRequest) => authApi.register(payload),
