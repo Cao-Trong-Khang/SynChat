@@ -1,0 +1,75 @@
+import { clsx } from 'clsx'
+
+import { observeUser } from '@/db/repositories/usersRepo'
+import { useAuthStore } from '@/features/auth/authStore'
+import { useShellStore } from '@/features/shell/shellStore'
+import { Avatar } from '@/shared/components/Avatar'
+
+import {
+  formatConversationTime,
+  getConversationPreview,
+  getConversationTitle,
+} from './conversationService'
+import type { ConversationListEntry } from './conversationTypes'
+
+type ConversationListItemProps = {
+  conversation: ConversationListEntry
+}
+
+export function ConversationListItem({ conversation }: ConversationListItemProps) {
+  const currentUser = useAuthStore((state) => state.currentUser)
+  const selectedConversationLocalId = useShellStore(
+    (state) => state.selectedConversationLocalId,
+  )
+  const setSelectedConversationLocalId = useShellStore(
+    (state) => state.setSelectedConversationLocalId,
+  )
+  const peerUser = observeUser(conversation.peerUserId)
+  const isSelected = selectedConversationLocalId === conversation.localId
+  const title = getConversationTitle(peerUser)
+  const preview = getConversationPreview(conversation, currentUser?.id)
+  const lastMessageTime = formatConversationTime(conversation.lastMessageAt)
+
+  return (
+    <button
+      className={clsx(
+        'flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-zinc-600',
+        isSelected && 'bg-zinc-900',
+      )}
+      onClick={() => setSelectedConversationLocalId(conversation.localId)}
+      type="button"
+    >
+      <div className="relative shrink-0">
+        <Avatar
+          className="bg-zinc-800 text-zinc-100"
+          name={title}
+          src={peerUser?.avatarUrl ?? undefined}
+        />
+        <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-zinc-950 bg-zinc-600" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-3">
+          <p className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-100">
+            {title}
+          </p>
+          {lastMessageTime ? (
+            <span className="shrink-0 text-xs text-zinc-500">
+              {lastMessageTime}
+            </span>
+          ) : null}
+        </div>
+        <div className="mt-1 flex items-center gap-3">
+          <p className="min-w-0 flex-1 truncate text-sm text-zinc-500">
+            {preview}
+          </p>
+          {conversation.unreadCount > 0 ? (
+            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-1.5 text-xs font-semibold text-zinc-950">
+              {conversation.unreadCount}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  )
+}
