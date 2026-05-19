@@ -18,14 +18,12 @@ type ConversationListItemProps = {
 
 export function ConversationListItem({ conversation }: ConversationListItemProps) {
   const currentUser = useAuthStore((state) => state.currentUser)
-  const selectedConversationLocalId = useShellStore(
-    (state) => state.selectedConversationLocalId,
-  )
-  const setSelectedConversationLocalId = useShellStore(
-    (state) => state.setSelectedConversationLocalId,
-  )
+  const selectedChat = useShellStore((state) => state.selectedChat)
+  const selectConversation = useShellStore((state) => state.selectConversation)
   const peerUser = observeUser(conversation.peerUserId)
-  const isSelected = selectedConversationLocalId === conversation.localId
+  const isSelected =
+    selectedChat.kind === 'conversation' &&
+    selectedChat.conversationLocalId === conversation.localId
   const title = getConversationTitle(peerUser)
   const preview = getConversationPreview(conversation, currentUser?.id)
   const lastMessageTime = formatConversationTime(conversation.lastMessageAt)
@@ -36,7 +34,7 @@ export function ConversationListItem({ conversation }: ConversationListItemProps
         'flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-zinc-600',
         isSelected && 'bg-zinc-900',
       )}
-      onClick={() => setSelectedConversationLocalId(conversation.localId)}
+      onClick={() => selectConversation(conversation.localId)}
       type="button"
     >
       <div className="relative shrink-0">

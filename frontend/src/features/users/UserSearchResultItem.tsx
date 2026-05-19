@@ -1,5 +1,8 @@
+import { useState } from 'react'
+
 import { Avatar } from '@/shared/components/Avatar'
 
+import { openUserSearchResult } from './userSearchService'
 import type { UserSearchResult } from './userTypes'
 
 type UserSearchResultItemProps = {
@@ -7,9 +10,27 @@ type UserSearchResultItemProps = {
 }
 
 export function UserSearchResultItem({ user }: UserSearchResultItemProps) {
+  const [isOpening, setIsOpening] = useState(false)
+
+  async function handleOpenUser() {
+    if (isOpening) {
+      return
+    }
+
+    setIsOpening(true)
+
+    try {
+      await openUserSearchResult(user)
+    } finally {
+      setIsOpening(false)
+    }
+  }
+
   return (
     <button
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-zinc-600"
+      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-zinc-600 disabled:cursor-wait disabled:opacity-70"
+      disabled={isOpening}
+      onClick={handleOpenUser}
       type="button"
     >
       <div className="relative shrink-0">
@@ -27,6 +48,9 @@ export function UserSearchResultItem({ user }: UserSearchResultItemProps) {
         </p>
         <p className="mt-1 truncate text-sm text-zinc-500">{user.email}</p>
       </div>
+      {isOpening ? (
+        <span className="shrink-0 text-xs text-zinc-500">Opening...</span>
+      ) : null}
     </button>
   )
 }
