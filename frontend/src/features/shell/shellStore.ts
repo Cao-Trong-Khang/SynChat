@@ -1,13 +1,11 @@
 import { create } from 'zustand'
 
-type SearchMode = 'conversations' | 'people'
-
 type ShellState = {
   searchKeyword: string
-  searchMode: SearchMode
+  searchMode: boolean
   selectedConversationLocalId: null | string
   setSearchKeyword: (searchKeyword: string) => void
-  setSearchMode: (searchMode: SearchMode) => void
+  setSearchMode: (searchMode: boolean) => void
   setSelectedConversationLocalId: (
     selectedConversationLocalId: null | string,
   ) => void
@@ -15,7 +13,7 @@ type ShellState = {
 
 export const useShellStore = create<ShellState>((set) => ({
   searchKeyword: '',
-  searchMode: 'conversations',
+  searchMode: false,
   selectedConversationLocalId: null,
   setSearchKeyword: (searchKeyword) => set({ searchKeyword }),
   setSearchMode: (searchMode) => set({ searchMode }),

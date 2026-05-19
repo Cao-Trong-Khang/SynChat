@@ -67,6 +67,7 @@ async function createApiError(response: Response): Promise<ApiError> {
 }
 
 export const httpClient = {
+  get: <TResponse>(path: string) => request<TResponse>(path),
   post: <TResponse, TBody = unknown>(path: string, body?: TBody) =>
     request<TResponse>(path, { body, method: 'POST' }),
 }
