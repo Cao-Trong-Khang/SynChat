@@ -2,6 +2,7 @@ import { env } from '@/config/env'
 import { authService } from '@/features/auth/authService'
 import { useAuthStore } from '@/features/auth/authStore'
 import { getOrCreateDeviceId } from '@/features/device/deviceId'
+import { outboxProcessor } from '@/features/outbox/outboxProcessor'
 import { eventSync } from '@/features/sync/eventSync'
 
 import { eventDispatcher } from './eventDispatcher'
@@ -137,11 +138,14 @@ export const websocketManager = {
         currentStore.setReconnectAttempt(0)
         currentStore.setReconnecting(false)
 
+        void outboxProcessor.processPending().catch((error: unknown) => {
+          console.error('Failed to process pending outbox commands.', error)
+        })
+
         if (wasReconnect) {
           void eventSync.syncEventsFromLastHandledSeq().catch((error: unknown) => {
             console.error('Failed to sync events after reconnect.', error)
           })
-          // TODO: process pending outbox commands after retry processor lands.
         }
       },
     })

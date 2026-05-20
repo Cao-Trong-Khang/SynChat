@@ -2,7 +2,10 @@ import type { LocalOutboxCommand } from '@/db/models'
 import {
   add,
   getByClientMessageId,
+  incrementRetry,
+  listPending,
   markDoneByClientMessageId,
+  markFailed,
   markProcessing,
   resetToPending,
 } from '@/db/repositories/outboxRepo'
@@ -42,4 +45,16 @@ export function findMessageSendOutboxCommand(clientMessageId: string) {
 
 export function resetOutboxCommandToPending(id: string) {
   return resetToPending(id)
+}
+
+export function listPendingOutboxCommands() {
+  return listPending()
+}
+
+export function incrementOutboxCommandRetry(id: string) {
+  return incrementRetry(id)
+}
+
+export function markOutboxCommandFailed(id: string) {
+  return markFailed(id)
 }

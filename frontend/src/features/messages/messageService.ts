@@ -143,7 +143,7 @@ export const messageService = {
       sendCommand('messages.send', payload, outboxCommand.id)
       await markOutboxCommandProcessing(outboxCommand.id)
     } catch {
-      await markFailedByLocalId(localMessageId)
+      // Pending outbox commands are retried by the reconnect processor.
     }
 
     return true

@@ -13,6 +13,15 @@ export async function markProcessing(id: string) {
   await db.outboxCommands.update(id, { status: 'processing' })
 }
 
+export async function incrementRetry(id: string) {
+  const command = await db.outboxCommands.get(id)
+  const retryCount = (command?.retryCount ?? 0) + 1
+
+  await db.outboxCommands.update(id, { retryCount })
+
+  return retryCount
+}
+
 export function getByClientMessageId(clientMessageId: string) {
   return db.outboxCommands
     .where('commandType')
@@ -46,12 +55,7 @@ export async function markDoneByClientMessageId(clientMessageId: string) {
 }
 
 export async function markFailed(id: string) {
-  const command = await db.outboxCommands.get(id)
-
-  await db.outboxCommands.update(id, {
-    retryCount: (command?.retryCount ?? 0) + 1,
-    status: 'failed',
-  })
+  await db.outboxCommands.update(id, { status: 'failed' })
 }
 
 export function listPending() {
