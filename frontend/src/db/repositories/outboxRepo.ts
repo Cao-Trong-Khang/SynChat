@@ -13,6 +13,21 @@ export async function markProcessing(id: string) {
   await db.outboxCommands.update(id, { status: 'processing' })
 }
 
+export function getByClientMessageId(clientMessageId: string) {
+  return db.outboxCommands
+    .where('commandType')
+    .equals('messages.send')
+    .filter((command) => {
+      const payload = command.payload as { clientMessageId?: string }
+      return payload.clientMessageId === clientMessageId
+    })
+    .first()
+}
+
+export async function resetToPending(id: string) {
+  await db.outboxCommands.update(id, { status: 'pending' })
+}
+
 export async function markDoneByClientMessageId(clientMessageId: string) {
   const matchingCommands = await db.outboxCommands
     .where('commandType')

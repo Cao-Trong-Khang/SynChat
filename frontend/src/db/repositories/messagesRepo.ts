@@ -135,6 +135,14 @@ export async function markFailedByClientMessageId(clientMessageId: string) {
     .modify({ localStatus: 'failed' })
 }
 
+export async function markFailedByLocalId(localId: string) {
+  await db.messages.update(localId, { localStatus: 'failed' })
+}
+
+export async function markSendingByLocalId(localId: string) {
+  await db.messages.update(localId, { localStatus: 'sending' })
+}
+
 export function countByConversationLocalId(conversationLocalId: string) {
   return db.messages
     .where('conversationLocalId')

@@ -49,7 +49,9 @@ export function MessageBubble({
         <div
           className={
             isMine
-              ? 'rounded-2xl rounded-br-md bg-zinc-100 px-4 py-2 text-sm leading-6 text-zinc-950'
+              ? message.localStatus === 'failed'
+                ? 'rounded-2xl rounded-br-md bg-red-950/70 px-4 py-2 text-sm leading-6 text-red-100'
+                : 'rounded-2xl rounded-br-md bg-zinc-100 px-4 py-2 text-sm leading-6 text-zinc-950'
               : 'rounded-2xl rounded-bl-md bg-zinc-900 px-4 py-2 text-sm leading-6 text-zinc-100'
           }
         >

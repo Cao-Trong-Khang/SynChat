@@ -1,6 +1,11 @@
 import type { LocalConversation, LocalMessage } from '@/db/models'
 import { ensure as ensureMessageSyncState } from '@/db/repositories/messageSyncStateRepo'
-import { addMessage } from '@/db/repositories/messagesRepo'
+import {
+  addMessage,
+  getByLocalId as getMessageByLocalId,
+  markFailedByLocalId,
+  markSendingByLocalId,
+} from '@/db/repositories/messagesRepo'
 import {
   getByLocalId,
   updateConversationPreview,
@@ -9,7 +14,9 @@ import {
 import { useAuthStore } from '@/features/auth/authStore'
 import { createDraftDirectConversation } from '@/features/conversations/conversationService'
 import {
+  findMessageSendOutboxCommand,
   markOutboxCommandProcessing,
+  resetOutboxCommandToPending,
   saveOutboxCommand,
 } from '@/features/outbox/outboxService'
 import { sendCommand } from '@/features/realtime/commandSender'
@@ -36,6 +43,22 @@ function commandPayloadForConversation(
     clientMessageId,
     recipientId: conversation.peerUserId,
   }
+}
+
+async function getMessageSendOutboxCommand(
+  payload: SendMessageCommandPayload,
+  createdAt: string,
+) {
+  const existingCommand = await findMessageSendOutboxCommand(
+    payload.clientMessageId,
+  )
+
+  if (existingCommand) {
+    await resetOutboxCommandToPending(existingCommand.id)
+    return existingCommand
+  }
+
+  return saveOutboxCommand('messages.send', payload, createdAt)
 }
 
 export const messageService = {
@@ -120,9 +143,42 @@ export const messageService = {
       sendCommand('messages.send', payload, outboxCommand.id)
       await markOutboxCommandProcessing(outboxCommand.id)
     } catch {
-      // Retry processor will handle pending commands in a later phase.
+      await markFailedByLocalId(localMessageId)
     }
 
     return true
+  },
+
+  async retryMessage(localMessageId: string) {
+    const message = await getMessageByLocalId(localMessageId)
+
+    if (!message?.clientMessageId) {
+      throw new Error('Cannot retry a message without a clientMessageId.')
+    }
+
+    const conversation = await getByLocalId(message.conversationLocalId)
+
+    if (!conversation) {
+      throw new Error('Cannot retry a message without a local conversation.')
+    }
+
+    const payload = commandPayloadForConversation(
+      conversation,
+      message.body,
+      message.clientMessageId,
+    )
+    const outboxCommand = await getMessageSendOutboxCommand(
+      payload,
+      message.createdAt,
+    )
+
+    await markSendingByLocalId(localMessageId)
+
+    try {
+      sendCommand('messages.send', payload, outboxCommand.id)
+      await markOutboxCommandProcessing(outboxCommand.id)
+    } catch {
+      await markFailedByLocalId(localMessageId)
+    }
   },
 }
