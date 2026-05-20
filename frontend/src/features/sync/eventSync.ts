@@ -11,6 +11,7 @@ let isSyncRunning = false
 export const eventSync = {
   async syncEventsFromLastHandledSeq() {
     if (isSyncRunning) {
+      console.log('SynChat sync recovery already running.')
       return
     }
 
@@ -19,6 +20,8 @@ export const eventSync = {
     try {
       let afterSeq = await getSyncStateNumber('last_handled_event_seq', 0)
       let hasMore = true
+
+      console.log('SynChat sync recovery started.', { afterSeq })
 
       while (hasMore) {
         const response = await syncApi.syncEvents(afterSeq, EVENT_SYNC_LIMIT)
@@ -33,6 +36,8 @@ export const eventSync = {
         hasMore = response.hasMore
         afterSeq = response.nextAfterSeq
       }
+
+      console.log('SynChat sync recovery completed.', { afterSeq })
     } catch (error) {
       if (error instanceof ApiError && error.code === 'EVENT_CURSOR_EXPIRED') {
         useSyncStore.getState().setNeedsFullResync(true)
