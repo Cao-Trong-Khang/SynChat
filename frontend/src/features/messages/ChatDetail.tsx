@@ -35,15 +35,19 @@ function ExistingConversationDetail({
 }) {
   const conversation = observeConversation(conversationLocalId)
   const peerUser = observeUser(conversation?.peerUserId ?? '')
-  const { isLoadingLatest } = useMessagePagination(
-    conversationLocalId,
-    conversation?.serverId,
-  )
+  const { hasMoreBefore, isLoadingLatest, loadOlder, loadingOlder } =
+    useMessagePagination(
+      conversationLocalId,
+      conversation?.serverId,
+    )
 
   return (
     <ChatDetailContent
       conversationLocalId={conversationLocalId}
+      hasMoreBefore={hasMoreBefore}
       isLoadingLatest={isLoadingLatest}
+      loadOlder={loadOlder}
+      loadingOlder={loadingOlder}
       peerUser={peerUser}
     />
   )
@@ -57,11 +61,17 @@ function DraftChatDetail({ peerUserId }: { peerUserId: string }) {
 
 function ChatDetailContent({
   conversationLocalId,
+  hasMoreBefore,
   isLoadingLatest,
+  loadOlder,
+  loadingOlder,
   peerUser,
 }: {
   conversationLocalId?: string
+  hasMoreBefore?: boolean
   isLoadingLatest?: boolean
+  loadOlder?: () => Promise<boolean>
+  loadingOlder?: boolean
   peerUser: ReturnType<typeof observeUser>
 }) {
   return (
@@ -70,7 +80,10 @@ function ChatDetailContent({
 
       <MessageList
         conversationLocalId={conversationLocalId}
+        hasMoreBefore={hasMoreBefore}
         isLoadingLatest={isLoadingLatest}
+        loadOlder={loadOlder}
+        loadingOlder={loadingOlder}
         peerUser={peerUser}
       />
 

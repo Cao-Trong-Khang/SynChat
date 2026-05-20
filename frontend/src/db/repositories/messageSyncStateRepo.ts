@@ -1,3 +1,5 @@
+import { useLiveQuery } from 'dexie-react-hooks'
+
 import { db } from '@/db/db'
 import type { LocalMessageSyncState } from '@/db/models'
 
@@ -38,3 +40,12 @@ export async function updateRange(
   await ensure(conversationLocalId)
   await db.messageSyncState.update(conversationLocalId, patch)
 }
+
+function useObserve(conversationLocalId: string) {
+  return useLiveQuery(
+    () => db.messageSyncState.get(conversationLocalId),
+    [conversationLocalId],
+  )
+}
+
+export { useObserve as observe }

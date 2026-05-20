@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { observe as observeMessageSyncState } from '@/db/repositories/messageSyncStateRepo'
 import { countByConversationLocalId } from '@/db/repositories/messagesRepo'
 import { messageSync } from '@/features/sync/messageSync'
 
@@ -8,6 +9,8 @@ export function useMessagePagination(
   serverId: null | string | undefined,
 ) {
   const [isLoadingLatest, setIsLoadingLatest] = useState(false)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const messageSyncState = observeMessageSyncState(conversationLocalId)
   const requestedConversationIdsRef = useRef(new Set<string>())
 
   useEffect(() => {
@@ -53,7 +56,27 @@ export function useMessagePagination(
     }
   }, [conversationLocalId, serverId])
 
+  const loadOlder = useCallback(async () => {
+    if (loadingOlder || !messageSyncState?.hasMoreBefore) {
+      return false
+    }
+
+    setLoadingOlder(true)
+
+    try {
+      return await messageSync.loadOlderMessages(conversationLocalId)
+    } catch (error) {
+      console.error('Failed to load older messages.', error)
+      return false
+    } finally {
+      setLoadingOlder(false)
+    }
+  }, [conversationLocalId, loadingOlder, messageSyncState?.hasMoreBefore])
+
   return {
+    hasMoreBefore: messageSyncState?.hasMoreBefore ?? false,
     isLoadingLatest,
+    loadOlder,
+    loadingOlder,
   }
 }

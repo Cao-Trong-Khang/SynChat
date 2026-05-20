@@ -24,4 +24,15 @@ export const messageApi = {
       `/conversations/${conversationId}/messages?${params.toString()}`,
     )
   },
+
+  loadOlderMessages(conversationId: string, beforeSeq: number, limit = 20) {
+    const params = new URLSearchParams({
+      beforeSeq: String(beforeSeq),
+      limit: String(limit),
+    })
+
+    return httpClient.get<MessagePageResponse>(
+      `/conversations/${conversationId}/messages?${params.toString()}`,
+    )
+  },
 }
