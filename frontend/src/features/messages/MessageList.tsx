@@ -33,9 +33,11 @@ export function MessageList({
 }: MessageListProps) {
   const currentUser = useAuthStore((state) => state.currentUser)
   const messages = useMessages(conversationLocalId)
-  const containerRef = useRef<HTMLElement | null>(null)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
   const previousConversationLocalIdRef = useRef<string | undefined>(undefined)
+  const previousMessageCountRef = useRef(0)
   const previousLastMessageLocalIdRef = useRef<string | undefined>(undefined)
+  const previousIsLoadingLatestRef = useRef(false)
   const didInitialScrollRef = useRef(false)
   const wasNearBottomRef = useRef(true)
   const pendingPrependScrollRef = useRef<{
@@ -43,8 +45,23 @@ export function MessageList({
     previousScrollTop: number
   } | null>(null)
 
+  function scrollToBottom(behavior: ScrollBehavior = 'auto') {
+    const container = scrollRef.current
+
+    if (!container) {
+      return
+    }
+
+    if (behavior === 'smooth') {
+      container.scrollTo({ behavior, top: container.scrollHeight })
+      return
+    }
+
+    container.scrollTop = container.scrollHeight
+  }
+
   async function handleScroll() {
-    const container = containerRef.current
+    const container = scrollRef.current
 
     if (!container) {
       return
@@ -77,6 +94,7 @@ export function MessageList({
   useLayoutEffect(() => {
     if (previousConversationLocalIdRef.current !== conversationLocalId) {
       previousConversationLocalIdRef.current = conversationLocalId
+      previousMessageCountRef.current = 0
       previousLastMessageLocalIdRef.current = undefined
       didInitialScrollRef.current = false
       wasNearBottomRef.current = true
@@ -85,9 +103,11 @@ export function MessageList({
   }, [conversationLocalId])
 
   useLayoutEffect(() => {
-    const container = containerRef.current
+    const container = scrollRef.current
 
     if (!container || messages.length === 0) {
+      previousIsLoadingLatestRef.current = isLoadingLatest
+      previousMessageCountRef.current = messages.length
       return
     }
 
@@ -100,38 +120,52 @@ export function MessageList({
         pendingPrependScroll.previousScrollHeight +
         pendingPrependScroll.previousScrollTop
       pendingPrependScrollRef.current = null
+      previousMessageCountRef.current = messages.length
+      previousLastMessageLocalIdRef.current =
+        messages[messages.length - 1]?.localId
+      previousIsLoadingLatestRef.current = isLoadingLatest
       return
     }
 
     const lastMessage = messages[messages.length - 1]
+    const previousMessageCount = previousMessageCountRef.current
     const previousLastMessageLocalId = previousLastMessageLocalIdRef.current
     const lastMessageChanged =
       previousLastMessageLocalId !== undefined &&
       previousLastMessageLocalId !== lastMessage.localId
-    const isOwnNewMessage = lastMessage.senderId === currentUser?.id
+    const wasEmptyAndNowHasMessages =
+      previousMessageCount === 0 && messages.length > 0
+    const latestHydrationCompleted =
+      previousIsLoadingLatestRef.current && !isLoadingLatest
+    const isOwnNewMessage =
+      lastMessageChanged && lastMessage.senderId === currentUser?.id
 
     if (
       !didInitialScrollRef.current ||
+      wasEmptyAndNowHasMessages ||
+      latestHydrationCompleted ||
       isOwnNewMessage ||
       (lastMessageChanged && wasNearBottomRef.current)
     ) {
-      container.scrollTop = container.scrollHeight
+      requestAnimationFrame(() => scrollToBottom('auto'))
       didInitialScrollRef.current = true
     }
 
+    previousMessageCountRef.current = messages.length
     previousLastMessageLocalIdRef.current = lastMessage.localId
-  }, [currentUser?.id, messages])
+    previousIsLoadingLatestRef.current = isLoadingLatest
+  }, [currentUser?.id, isLoadingLatest, messages])
 
   if (!conversationLocalId || messages.length === 0) {
     return (
-      <section
+      <div
         className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 text-center"
-        ref={containerRef}
+        ref={scrollRef}
       >
         <p className="text-sm text-zinc-500">
           {isLoadingLatest ? 'Loading messages...' : 'No messages yet'}
         </p>
-      </section>
+      </div>
     )
   }
 
@@ -141,10 +175,10 @@ export function MessageList({
   const renderItems = groupMessages(messages)
 
   return (
-    <section
+    <div
       className="min-h-0 flex-1 overflow-y-auto px-5 py-4"
       onScroll={() => void handleScroll()}
-      ref={containerRef}
+      ref={scrollRef}
     >
       {loadingOlder ? (
         <div className="pb-3 text-center text-xs text-zinc-500">
@@ -166,6 +200,6 @@ export function MessageList({
           ),
         )}
       </div>
-    </section>
+    </div>
   )
 }
