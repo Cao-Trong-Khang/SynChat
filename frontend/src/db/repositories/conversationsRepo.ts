@@ -19,6 +19,14 @@ export function getByPeerUserId(peerUserId: string) {
   return db.conversations.where('peerUserId').equals(peerUserId).first()
 }
 
+export function countConversations() {
+  return db.conversations.count()
+}
+
+export async function hasAnyConversation() {
+  return (await countConversations()) > 0
+}
+
 function sortConversationList(
   conversations: LocalConversation[],
 ): LocalConversation[] {

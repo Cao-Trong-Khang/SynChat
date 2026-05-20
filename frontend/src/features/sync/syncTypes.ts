@@ -1,0 +1,20 @@
+import type { LocalUser } from '@/db/models'
+
+export type ConversationSyncItem = {
+  conversationId: string
+  lastMessageAt: null | string
+  lastMessageSenderId: null | string
+  lastMessageSeq: null | number
+  lastMessageText: null | string
+  peer: LocalUser
+  peerDeliveredSeq: number
+  peerReadSeq: number
+  unreadCount: number
+}
+
+export type ConversationSyncResponse = {
+  hasMore: boolean
+  items: ConversationSyncItem[]
+  nextCursor: null | string
+  serverEventSeq: null | number
+}
