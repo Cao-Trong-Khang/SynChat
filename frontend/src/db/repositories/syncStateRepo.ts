@@ -5,6 +5,13 @@ export async function get(key: string) {
   return syncState?.value ?? null
 }
 
+export async function getNumber(key: string, fallback = 0) {
+  const value = await get(key)
+  const numberValue = value === null ? Number.NaN : Number(value)
+
+  return Number.isFinite(numberValue) ? numberValue : fallback
+}
+
 export async function set(key: string, value: null | string) {
   await db.syncState.put({ key, value })
 }

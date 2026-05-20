@@ -1,5 +1,7 @@
 import { eventApplier } from '@/features/sync/eventApplier'
-import type { MessageCreatedEventEnvelope } from '@/features/sync/syncTypes'
+import type {
+  PersistedEventEnvelope as SyncPersistedEventEnvelope,
+} from '@/features/sync/syncTypes'
 
 import type { PersistedEventEnvelope, ServerEnvelope } from './websocketTypes'
 
@@ -11,11 +13,11 @@ function isPersistedEvent(
 
 export const eventDispatcher = {
   dispatch(envelope: ServerEnvelope) {
-    if (isPersistedEvent(envelope) && envelope.eventType === 'message.created') {
+    if (isPersistedEvent(envelope)) {
       void eventApplier
-        .applyMessageCreated(envelope as MessageCreatedEventEnvelope)
+        .applyPersistedEvent(envelope as SyncPersistedEventEnvelope)
         .catch((error: unknown) => {
-          console.error('Failed to apply message.created event.', error)
+          console.error('Failed to apply persisted event.', error)
         })
       return
     }

@@ -5,7 +5,7 @@ import { mapConversationSyncItem } from '@/features/conversations/conversationMa
 
 import { syncApi } from './syncApi'
 
-const CONVERSATION_BOOTSTRAP_LIMIT = 20
+const CONVERSATION_BOOTSTRAP_LIMIT = 10
 
 export const conversationSync = {
   async bootstrapFirstConversationPage() {

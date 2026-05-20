@@ -36,3 +36,16 @@ export type MessageCreatedEventEnvelope = {
   payload: MessageCreatedEventPayload
   type: 'event'
 }
+
+export type PersistedEventEnvelope = {
+  eventSeq: number
+  eventType: string
+  payload: unknown
+  type: 'event'
+}
+
+export type SyncEventsResponse = {
+  events: PersistedEventEnvelope[]
+  hasMore: boolean
+  nextAfterSeq: number
+}

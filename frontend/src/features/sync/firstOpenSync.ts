@@ -2,6 +2,7 @@ import { countConversations } from '@/db/repositories/conversationsRepo'
 import { get as getSyncState } from '@/db/repositories/syncStateRepo'
 
 import { conversationSync } from './conversationSync'
+import { eventSync } from './eventSync'
 
 export async function firstOpenSync() {
   const [conversationsBootstrapped, conversationCount] = await Promise.all([
@@ -11,8 +12,7 @@ export async function firstOpenSync() {
 
   if (conversationsBootstrapped !== 'true' && conversationCount === 0) {
     await conversationSync.bootstrapFirstConversationPage()
-    return
   }
 
-  // Phase 4: call syncEvents from last_handled_event_seq.
+  await eventSync.syncEventsFromLastHandledSeq()
 }

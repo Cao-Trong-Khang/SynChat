@@ -6,15 +6,48 @@ import {
   replaceByClientMessageId,
   upsertByConversationLocalIdAndSeq,
 } from '@/db/repositories/messagesRepo'
-import { set as setSyncState } from '@/db/repositories/syncStateRepo'
+import {
+  getNumber as getSyncStateNumber,
+  set as setSyncState,
+} from '@/db/repositories/syncStateRepo'
 import { upsertUser } from '@/db/repositories/usersRepo'
 import { mapConversationMetadataToLocal } from '@/features/conversations/conversationMapper'
 import { mapMessageCreatedToLocalMessage } from '@/features/messages/messageMapper'
 import { markMessageSendOutboxDone } from '@/features/outbox/outboxService'
 
-import type { MessageCreatedEventEnvelope } from './syncTypes'
+import type {
+  MessageCreatedEventEnvelope,
+  PersistedEventEnvelope,
+} from './syncTypes'
 
 export const eventApplier = {
+  async applyPersistedEvent(envelope: PersistedEventEnvelope) {
+    const lastHandledEventSeq = await getSyncStateNumber(
+      'last_handled_event_seq',
+      0,
+    )
+
+    if (envelope.eventSeq <= lastHandledEventSeq) {
+      return
+    }
+
+    if (envelope.eventType === 'message.created') {
+      await this.applyMessageCreated(envelope as MessageCreatedEventEnvelope)
+      return
+    }
+
+    if (
+      envelope.eventType === 'message.delivered' ||
+      envelope.eventType === 'message.read'
+    ) {
+      // Phase 5: apply delivered/read receipts.
+      await setSyncState('last_handled_event_seq', String(envelope.eventSeq))
+      return
+    }
+
+    await setSyncState('last_handled_event_seq', String(envelope.eventSeq))
+  },
+
   async applyMessageCreated(envelope: MessageCreatedEventEnvelope) {
     await db.transaction(
       'rw',
