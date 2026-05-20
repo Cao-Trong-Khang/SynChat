@@ -23,6 +23,26 @@ export type LocalSyncState = {
   value: null | string
 }
 
+export type LocalMessageStatus = 'failed' | 'sending' | 'sent'
+
+export type LocalMessage = {
+  body: string
+  clientMessageId: null | string
+  conversationLocalId: string
+  createdAt: string
+  localId: string
+  localStatus: LocalMessageStatus
+  senderId: string
+  seq: null | number
+}
+
+export type LocalMessageSyncState = {
+  conversationLocalId: string
+  hasMoreBefore: boolean
+  newestLoadedSeq: null | number
+  oldestLoadedSeq: null | number
+}
+
 export type LocalOutboxCommandStatus =
   | 'done'
   | 'failed'
