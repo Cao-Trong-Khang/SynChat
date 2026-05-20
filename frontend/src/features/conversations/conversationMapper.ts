@@ -6,8 +6,9 @@ type MappedConversation = {
   peer: LocalUser
 }
 
-export function mapConversationSyncItem(
+export function mapConversationMetadataToLocal(
   item: ConversationSyncItem,
+  localId = `direct:${item.peer.id}`,
 ): MappedConversation {
   return {
     conversation: {
@@ -15,7 +16,7 @@ export function mapConversationSyncItem(
       lastMessageSenderId: item.lastMessageSenderId,
       lastMessageSeq: item.lastMessageSeq,
       lastMessageText: item.lastMessageText,
-      localId: `direct:${item.peer.id}`,
+      localId,
       peerDeliveredSeq: item.peerDeliveredSeq,
       peerReadSeq: item.peerReadSeq,
       peerUserId: item.peer.id,
@@ -24,4 +25,10 @@ export function mapConversationSyncItem(
     },
     peer: item.peer,
   }
+}
+
+export function mapConversationSyncItem(
+  item: ConversationSyncItem,
+): MappedConversation {
+  return mapConversationMetadataToLocal(item)
 }

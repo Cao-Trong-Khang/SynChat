@@ -13,6 +13,23 @@ export async function markProcessing(id: string) {
   await db.outboxCommands.update(id, { status: 'processing' })
 }
 
+export async function markDoneByClientMessageId(clientMessageId: string) {
+  const matchingCommands = await db.outboxCommands
+    .where('commandType')
+    .equals('messages.send')
+    .filter((command) => {
+      const payload = command.payload as { clientMessageId?: string }
+      return payload.clientMessageId === clientMessageId
+    })
+    .toArray()
+
+  await Promise.all(
+    matchingCommands.map((command) =>
+      db.outboxCommands.update(command.id, { status: 'done' }),
+    ),
+  )
+}
+
 export async function markFailed(id: string) {
   const command = await db.outboxCommands.get(id)
 

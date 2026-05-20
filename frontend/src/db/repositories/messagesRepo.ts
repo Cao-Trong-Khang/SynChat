@@ -4,7 +4,15 @@ import { db } from '@/db/db'
 import type { LocalMessage } from '@/db/models'
 
 type SentMessagePatch = Partial<
-  Pick<LocalMessage, 'createdAt' | 'localId' | 'seq'>
+  Pick<
+    LocalMessage,
+    | 'body'
+    | 'conversationLocalId'
+    | 'createdAt'
+    | 'localId'
+    | 'senderId'
+    | 'seq'
+  >
 >
 
 export async function addMessage(message: LocalMessage) {
@@ -90,6 +98,30 @@ export async function markSentByClientMessageId(
       ...patch,
       localStatus: 'sent',
     })
+}
+
+export async function replaceByClientMessageId(
+  clientMessageId: string,
+  patch: SentMessagePatch,
+) {
+  await markSentByClientMessageId(clientMessageId, patch)
+}
+
+export async function upsertByConversationLocalIdAndSeq(
+  message: LocalMessage,
+) {
+  const existingMessage =
+    message.seq === null
+      ? undefined
+      : await getByConversationLocalIdAndSeq(
+          message.conversationLocalId,
+          message.seq,
+        )
+
+  await upsertMessage({
+    ...message,
+    localId: existingMessage?.localId ?? message.localId,
+  })
 }
 
 export async function markFailedByClientMessageId(clientMessageId: string) {

@@ -1,5 +1,9 @@
 import type { LocalOutboxCommand } from '@/db/models'
-import { add, markProcessing } from '@/db/repositories/outboxRepo'
+import {
+  add,
+  markDoneByClientMessageId,
+  markProcessing,
+} from '@/db/repositories/outboxRepo'
 
 import type { OutboxCommandPayloadByType, OutboxCommandType } from './outboxTypes'
 
@@ -24,4 +28,8 @@ export async function saveOutboxCommand<TCommandType extends OutboxCommandType>(
 
 export function markOutboxCommandProcessing(id: string) {
   return markProcessing(id)
+}
+
+export function markMessageSendOutboxDone(clientMessageId: string) {
+  return markDoneByClientMessageId(clientMessageId)
 }

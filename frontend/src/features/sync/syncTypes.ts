@@ -18,3 +18,21 @@ export type ConversationSyncResponse = {
   nextCursor: null | string
   serverEventSeq: null | number
 }
+
+export type MessageCreatedEventPayload = {
+  conversation: ConversationSyncItem
+  message: {
+    body: string
+    clientMessageId: null | string
+    createdAtServer: string
+    senderId: string
+    seq: number
+  }
+}
+
+export type MessageCreatedEventEnvelope = {
+  eventSeq: number
+  eventType: 'message.created'
+  payload: MessageCreatedEventPayload
+  type: 'event'
+}
