@@ -3,7 +3,10 @@ import {
   get as getMessageSyncState,
   updateRange,
 } from '@/db/repositories/messageSyncStateRepo'
-import { upsertMessages } from '@/db/repositories/messagesRepo'
+import {
+  countByConversationLocalId,
+  upsertMessages,
+} from '@/db/repositories/messagesRepo'
 import { mapServerMessageToLocalMessage } from '@/features/messages/messageMapper'
 import { messageApi } from '@/features/messages/messageApi'
 
@@ -11,6 +14,35 @@ const LATEST_MESSAGES_LIMIT = 20
 const OLDER_MESSAGES_LIMIT = 20
 
 export const messageSync = {
+  async shouldLoadLatestMessages(conversationLocalId: string) {
+    const conversation = await getByLocalId(conversationLocalId)
+
+    if (!conversation?.serverId) {
+      return false
+    }
+
+    const [localMessageCount, syncState] = await Promise.all([
+      countByConversationLocalId(conversationLocalId),
+      getMessageSyncState(conversationLocalId),
+    ])
+
+    return (
+      localMessageCount === 0 ||
+      !syncState ||
+      (localMessageCount < LATEST_MESSAGES_LIMIT && syncState.hasMoreBefore)
+    )
+  },
+
+  async ensureLatestMessagesLoaded(conversationLocalId: string) {
+    if (!(await this.shouldLoadLatestMessages(conversationLocalId))) {
+      return false
+    }
+
+    await this.loadLatestMessages(conversationLocalId)
+
+    return true
+  },
+
   async loadLatestMessages(conversationLocalId: string) {
     const conversation = await getByLocalId(conversationLocalId)
 
@@ -29,9 +61,18 @@ export const messageSync = {
       ),
     )
 
+    const existingState = await getMessageSyncState(conversationLocalId)
+    const newestLoadedSeq =
+      response.newestSeq === null
+        ? existingState?.newestLoadedSeq ?? null
+        : Math.max(
+            existingState?.newestLoadedSeq ?? response.newestSeq,
+            response.newestSeq,
+          )
+
     await updateRange(conversationLocalId, {
       hasMoreBefore: response.hasMoreBefore,
-      newestLoadedSeq: response.newestSeq,
+      newestLoadedSeq,
       oldestLoadedSeq: response.oldestSeq,
     })
   },

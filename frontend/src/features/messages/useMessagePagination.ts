@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { observe as observeMessageSyncState } from '@/db/repositories/messageSyncStateRepo'
-import { countByConversationLocalId } from '@/db/repositories/messagesRepo'
 import { messageSync } from '@/features/sync/messageSync'
 
 export function useMessagePagination(
@@ -22,11 +21,11 @@ export function useMessagePagination(
 
     let isMounted = true
 
-    async function loadIfEmpty() {
-      const localMessageCount =
-        await countByConversationLocalId(conversationLocalId)
+    async function ensureLatestMessagesLoaded() {
+      const shouldLoadLatest =
+        await messageSync.shouldLoadLatestMessages(conversationLocalId)
 
-      if (localMessageCount > 0) {
+      if (!shouldLoadLatest) {
         return
       }
 
@@ -35,7 +34,7 @@ export function useMessagePagination(
       }
 
       try {
-        await messageSync.loadLatestMessages(conversationLocalId)
+        await messageSync.ensureLatestMessagesLoaded(conversationLocalId)
       } finally {
         if (isMounted) {
           setIsLoadingLatest(false)
@@ -43,7 +42,7 @@ export function useMessagePagination(
       }
     }
 
-    void loadIfEmpty().catch((error: unknown) => {
+    void ensureLatestMessagesLoaded().catch((error: unknown) => {
       console.error('Failed to load latest messages.', error)
 
       if (isMounted) {

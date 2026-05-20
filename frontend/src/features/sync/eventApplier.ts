@@ -1,6 +1,6 @@
 import { db } from '@/db/db'
 import { getByServerId, upsertConversation } from '@/db/repositories/conversationsRepo'
-import { ensure as ensureMessageSyncState } from '@/db/repositories/messageSyncStateRepo'
+import { expandRangeForMessageSeq } from '@/db/repositories/messageSyncStateRepo'
 import {
   getByClientMessageId,
   replaceByClientMessageId,
@@ -73,7 +73,6 @@ export const eventApplier = {
 
         await upsertUser(mappedConversation.peer)
         await upsertConversation(mappedConversation.conversation)
-        await ensureMessageSyncState(conversationLocalId)
 
         if (message.clientMessageId) {
           const existingMessage = await getByClientMessageId(
@@ -100,6 +99,8 @@ export const eventApplier = {
             mapMessageCreatedToLocalMessage(conversationLocalId, message),
           )
         }
+
+        await expandRangeForMessageSeq(conversationLocalId, message.seq)
 
         await setSyncState(
           'last_handled_event_seq',

@@ -41,6 +41,31 @@ export async function updateRange(
   await db.messageSyncState.update(conversationLocalId, patch)
 }
 
+export async function expandRangeForMessageSeq(
+  conversationLocalId: string,
+  seq: number,
+) {
+  const existingState = await get(conversationLocalId)
+
+  if (!existingState) {
+    await db.messageSyncState.add({
+      conversationLocalId,
+      hasMoreBefore: true,
+      newestLoadedSeq: seq,
+      oldestLoadedSeq: seq,
+    })
+    return
+  }
+
+  await db.messageSyncState.update(conversationLocalId, {
+    newestLoadedSeq: Math.max(existingState.newestLoadedSeq ?? seq, seq),
+    oldestLoadedSeq:
+      existingState.oldestLoadedSeq === null
+        ? seq
+        : Math.min(existingState.oldestLoadedSeq, seq),
+  })
+}
+
 function useObserve(conversationLocalId: string) {
   return useLiveQuery(
     () => db.messageSyncState.get(conversationLocalId),

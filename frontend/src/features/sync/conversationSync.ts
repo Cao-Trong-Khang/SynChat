@@ -13,7 +13,7 @@ import type { ConversationSyncResponse } from '@/features/sync/syncTypes'
 
 import { syncApi } from './syncApi'
 
-const CONVERSATION_PAGE_LIMIT = 20
+const CONVERSATION_PAGE_LIMIT = 15
 
 async function applyConversationPage(response: ConversationSyncResponse) {
   const mappedItems = response.items.map((item) => mapConversationSyncItem(item))
