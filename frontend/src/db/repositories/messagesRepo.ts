@@ -27,6 +27,10 @@ export async function upsertMessage(message: LocalMessage) {
   await db.messages.put(message)
 }
 
+export async function upsertMessages(messages: LocalMessage[]) {
+  await db.messages.bulkPut(messages)
+}
+
 export function getByLocalId(localId: string) {
   return db.messages.get(localId)
 }

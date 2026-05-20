@@ -4,6 +4,7 @@ import { observeUser } from '@/db/repositories/usersRepo'
 import { ChatHeader } from './ChatHeader'
 import { MessageComposer } from './MessageComposer'
 import { MessageList } from './MessageList'
+import { useMessagePagination } from './useMessagePagination'
 
 type ChatDetailProps =
   | {
@@ -34,10 +35,15 @@ function ExistingConversationDetail({
 }) {
   const conversation = observeConversation(conversationLocalId)
   const peerUser = observeUser(conversation?.peerUserId ?? '')
+  const { isLoadingLatest } = useMessagePagination(
+    conversationLocalId,
+    conversation?.serverId,
+  )
 
   return (
     <ChatDetailContent
       conversationLocalId={conversationLocalId}
+      isLoadingLatest={isLoadingLatest}
       peerUser={peerUser}
     />
   )
@@ -51,16 +57,22 @@ function DraftChatDetail({ peerUserId }: { peerUserId: string }) {
 
 function ChatDetailContent({
   conversationLocalId,
+  isLoadingLatest,
   peerUser,
 }: {
   conversationLocalId?: string
+  isLoadingLatest?: boolean
   peerUser: ReturnType<typeof observeUser>
 }) {
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-zinc-950">
       <ChatHeader peerUser={peerUser} />
 
-      <MessageList conversationLocalId={conversationLocalId} peerUser={peerUser} />
+      <MessageList
+        conversationLocalId={conversationLocalId}
+        isLoadingLatest={isLoadingLatest}
+        peerUser={peerUser}
+      />
 
       <footer className="border-t border-zinc-800 px-5 py-4">
         <MessageComposer />

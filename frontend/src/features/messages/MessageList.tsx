@@ -8,11 +8,13 @@ import { useMessages } from './useMessages'
 
 type MessageListProps = {
   conversationLocalId?: string
+  isLoadingLatest?: boolean
   peerUser: LocalUser | undefined
 }
 
 export function MessageList({
   conversationLocalId,
+  isLoadingLatest = false,
   peerUser,
 }: MessageListProps) {
   const currentUser = useAuthStore((state) => state.currentUser)
@@ -21,7 +23,9 @@ export function MessageList({
   if (!conversationLocalId || messages.length === 0) {
     return (
       <section className="flex min-h-0 flex-1 items-center justify-center px-6 text-center">
-        <p className="text-sm text-zinc-500">No messages yet</p>
+        <p className="text-sm text-zinc-500">
+          {isLoadingLatest ? 'Loading messages...' : 'No messages yet'}
+        </p>
       </section>
     )
   }
