@@ -11,6 +11,10 @@ export async function addMessage(message: LocalMessage) {
   await db.messages.add(message)
 }
 
+export async function addMessages(messages: LocalMessage[]) {
+  await db.messages.bulkAdd(messages)
+}
+
 export async function upsertMessage(message: LocalMessage) {
   await db.messages.put(message)
 }

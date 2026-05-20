@@ -9,6 +9,10 @@ export async function markDone(id: string) {
   await db.outboxCommands.update(id, { status: 'done' })
 }
 
+export async function markProcessing(id: string) {
+  await db.outboxCommands.update(id, { status: 'processing' })
+}
+
 export async function markFailed(id: string) {
   const command = await db.outboxCommands.get(id)
 

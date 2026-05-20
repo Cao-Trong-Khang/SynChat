@@ -7,6 +7,16 @@ export async function upsertConversation(conversation: LocalConversation) {
   await db.conversations.put(conversation)
 }
 
+export async function updateConversationPreview(
+  localId: string,
+  patch: Pick<
+    LocalConversation,
+    'lastMessageAt' | 'lastMessageSenderId' | 'lastMessageText'
+  >,
+) {
+  await db.conversations.update(localId, patch)
+}
+
 export function getByLocalId(localId: string) {
   return db.conversations.get(localId)
 }

@@ -2,6 +2,7 @@ import { observeConversation } from '@/db/repositories/conversationsRepo'
 import { observeUser } from '@/db/repositories/usersRepo'
 
 import { ChatHeader } from './ChatHeader'
+import { MessageComposer } from './MessageComposer'
 import { MessageList } from './MessageList'
 
 type ChatDetailProps =
@@ -62,9 +63,7 @@ function ChatDetailContent({
       <MessageList conversationLocalId={conversationLocalId} peerUser={peerUser} />
 
       <footer className="border-t border-zinc-800 px-5 py-4">
-        <div className="rounded-md border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-500">
-          Message composer will be available in Phase 3
-        </div>
+        <MessageComposer />
       </footer>
     </div>
   )

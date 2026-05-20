@@ -43,6 +43,26 @@ export function formatConversationTime(lastMessageAt: null | string) {
   }).format(date)
 }
 
+export function createDraftDirectConversation(
+  peerUserId: string,
+  currentUserId: string,
+  body: string,
+  createdAt: string,
+): LocalConversation {
+  return {
+    lastMessageAt: createdAt,
+    lastMessageSenderId: currentUserId,
+    lastMessageSeq: null,
+    lastMessageText: body,
+    localId: `direct:${peerUserId}`,
+    peerDeliveredSeq: 0,
+    peerReadSeq: 0,
+    peerUserId,
+    serverId: null,
+    unreadCount: 0,
+  }
+}
+
 function mapDirectConversation(
   peerUserId: string,
   metadata: DirectConversationMetadata,
