@@ -1,9 +1,31 @@
+import { useRef, type UIEvent } from 'react'
+
 import { ConversationEmptyState } from './ConversationEmptyState'
 import { ConversationListItem } from './ConversationListItem'
 import { useConversationList } from './useConversationList'
 
 export function ConversationList() {
-  const conversations = useConversationList()
+  const { conversations, loadingMore, loadMoreConversations } =
+    useConversationList()
+  const isLoadingMoreRef = useRef(false)
+
+  async function handleScroll(event: UIEvent<HTMLElement>) {
+    const container = event.currentTarget
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight
+
+    if (distanceFromBottom >= 160 || isLoadingMoreRef.current || loadingMore) {
+      return
+    }
+
+    isLoadingMoreRef.current = true
+
+    try {
+      await loadMoreConversations()
+    } finally {
+      isLoadingMoreRef.current = false
+    }
+  }
 
   if (conversations === undefined) {
     return (
@@ -27,13 +49,21 @@ export function ConversationList() {
   }
 
   return (
-    <section className="min-h-0 flex-1 overflow-y-auto py-2">
+    <section
+      className="min-h-0 flex-1 overflow-y-auto py-2"
+      onScroll={(event) => void handleScroll(event)}
+    >
       {conversations.map((conversation) => (
         <ConversationListItem
           conversation={conversation}
           key={conversation.localId}
         />
       ))}
+      {loadingMore ? (
+        <div className="py-3 text-center text-xs text-zinc-500">
+          Loading more conversations...
+        </div>
+      ) : null}
     </section>
   )
 }
