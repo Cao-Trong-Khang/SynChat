@@ -47,6 +47,22 @@ export function storeAuthSession(session: StoredAuthSession) {
   localStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session))
 }
 
+export function updateStoredTokens(tokens: AuthTokens) {
+  const session = getStoredAuthSession()
+
+  if (!session) {
+    return
+  }
+
+  storeAuthSession({
+    ...session,
+    accessToken: tokens.accessToken,
+    accessTokenExpiresAt: tokens.accessTokenExpiresAt,
+    refreshToken: tokens.refreshToken,
+    refreshTokenExpiresAt: tokens.refreshTokenExpiresAt,
+  })
+}
+
 export function clearStoredTokens() {
   localStorage.removeItem(AUTH_SESSION_STORAGE_KEY)
 }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
+import { authService } from '@/features/auth/authService'
 import { useAuthStore } from '@/features/auth/authStore'
-import { getStoredTokens } from '@/features/auth/tokenStorage'
 import { getOrCreateDeviceId } from '@/features/device/deviceId'
 import { websocketManager } from '@/features/realtime/websocketManager'
 import { firstOpenSync } from '@/features/sync/firstOpenSync'
@@ -40,14 +40,17 @@ export function AuthenticatedAppEffects() {
       return
     }
 
-    const { accessToken } = getStoredTokens()
-
-    if (!accessToken) {
-      return
-    }
-
     connectedUserIds.add(currentUser.id)
-    websocketManager.connect(accessToken, getOrCreateDeviceId())
+
+    void authService
+      .ensureFreshAccessToken()
+      .then((accessToken) => {
+        websocketManager.connect(accessToken, getOrCreateDeviceId())
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to connect SynChat WebSocket.', error)
+        connectedUserIds.delete(currentUser.id)
+      })
 
     return () => {
       connectedUserIds.delete(currentUser.id)

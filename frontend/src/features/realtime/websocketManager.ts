@@ -1,12 +1,20 @@
 import { env } from '@/config/env'
+import { authService } from '@/features/auth/authService'
+import { useAuthStore } from '@/features/auth/authStore'
+import { getOrCreateDeviceId } from '@/features/device/deviceId'
+import { eventSync } from '@/features/sync/eventSync'
 
 import { eventDispatcher } from './eventDispatcher'
+import { reconnectPolicy } from './reconnectPolicy'
 import { useWebSocketStore } from './websocketStore'
 import { WebSocketClient } from './websocketClient'
 import type { ServerEnvelope } from './websocketTypes'
 
 const client = new WebSocketClient()
 let activeConnectionKey: null | string = null
+let reconnectTimerId: number | null = null
+let intentionalClose = false
+let hasConnectedAtLeastOnce = false
 
 function connectionUrl(accessToken: string, deviceId: string) {
   const accessTokenParam = encodeURIComponent(accessToken)
@@ -25,11 +33,59 @@ function setDisconnected(lastError?: string) {
   }
 }
 
+function clearReconnectTimer() {
+  if (reconnectTimerId !== null) {
+    window.clearTimeout(reconnectTimerId)
+    reconnectTimerId = null
+  }
+}
+
+function scheduleReconnect() {
+  const authState = useAuthStore.getState()
+
+  if (!authState.isAuthenticated || intentionalClose || reconnectTimerId) {
+    return
+  }
+
+  const delay = reconnectPolicy.nextDelay()
+  const store = useWebSocketStore.getState()
+  store.setReconnecting(true)
+  store.setReconnectAttempt(reconnectPolicy.currentAttempt())
+
+  reconnectTimerId = window.setTimeout(() => {
+    reconnectTimerId = null
+    void reconnect()
+  }, delay)
+}
+
+async function reconnect() {
+  const authState = useAuthStore.getState()
+
+  if (!authState.isAuthenticated || intentionalClose) {
+    return
+  }
+
+  try {
+    const accessToken = await authService.ensureFreshAccessToken()
+    websocketManager.connect(accessToken, getOrCreateDeviceId())
+  } catch (error) {
+    useWebSocketStore
+      .getState()
+      .setLastError(error instanceof Error ? error.message : 'Reconnect failed.')
+  }
+}
+
 export const websocketManager = {
   close() {
+    intentionalClose = true
     activeConnectionKey = null
+    clearReconnectTimer()
     client.close()
+    reconnectPolicy.reset()
     setDisconnected()
+    const store = useWebSocketStore.getState()
+    store.setReconnecting(false)
+    store.setReconnectAttempt(0)
   },
 
   connect(accessToken: string, deviceId: string) {
@@ -43,6 +99,8 @@ export const websocketManager = {
       return
     }
 
+    intentionalClose = false
+    clearReconnectTimer()
     activeConnectionKey = nextConnectionKey
     store.setConnecting(true)
     store.setConnected(false)
@@ -51,9 +109,15 @@ export const websocketManager = {
     client.connect(connectionUrl(accessToken, deviceId), {
       onClose: () => {
         setDisconnected()
+        if (!intentionalClose) {
+          scheduleReconnect()
+        }
       },
       onError: () => {
         setDisconnected('WebSocket connection error.')
+        if (!intentionalClose) {
+          scheduleReconnect()
+        }
       },
       onMessage: (event) => {
         try {
@@ -64,9 +128,21 @@ export const websocketManager = {
       },
       onOpen: () => {
         const currentStore = useWebSocketStore.getState()
+        const wasReconnect = hasConnectedAtLeastOnce || currentStore.reconnecting
+        hasConnectedAtLeastOnce = true
+        reconnectPolicy.reset()
         currentStore.setConnecting(false)
         currentStore.setConnected(true)
         currentStore.setLastError(null)
+        currentStore.setReconnectAttempt(0)
+        currentStore.setReconnecting(false)
+
+        if (wasReconnect) {
+          void eventSync.syncEventsFromLastHandledSeq().catch((error: unknown) => {
+            console.error('Failed to sync events after reconnect.', error)
+          })
+          // TODO: process pending outbox commands after retry processor lands.
+        }
       },
     })
   },

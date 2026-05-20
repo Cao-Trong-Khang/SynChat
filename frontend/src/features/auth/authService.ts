@@ -8,7 +8,22 @@ import {
   getStoredAuthSession,
   getStoredTokens,
   storeAuthSession,
+  updateStoredTokens,
 } from './tokenStorage'
+
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60_000
+
+function isAccessTokenFreshEnough(accessTokenExpiresAt?: string) {
+  if (!accessTokenExpiresAt) {
+    return false
+  }
+
+  const expiresAt = new Date(accessTokenExpiresAt).getTime()
+
+  return Number.isFinite(expiresAt)
+    ? expiresAt - Date.now() > ACCESS_TOKEN_REFRESH_BUFFER_MS
+    : false
+}
 
 export const authService = {
   bootstrapAuth() {
@@ -39,6 +54,45 @@ export const authService = {
     useAuthStore.getState().setAuth(response.user)
 
     return response
+  },
+
+  async ensureFreshAccessToken() {
+    const tokens = getStoredTokens()
+
+    if (
+      tokens.accessToken &&
+      isAccessTokenFreshEnough(tokens.accessTokenExpiresAt)
+    ) {
+      return tokens.accessToken
+    }
+
+    if (!tokens.refreshToken) {
+      clearStoredTokens()
+      useAuthStore.getState().clearAuth()
+      window.location.assign('/login')
+      throw new Error('Missing refresh token.')
+    }
+
+    try {
+      const response = await authApi.refresh({
+        deviceId: getOrCreateDeviceId(),
+        refreshToken: tokens.refreshToken,
+      })
+
+      updateStoredTokens({
+        accessToken: response.accessToken,
+        accessTokenExpiresAt: response.accessTokenExpiresAt,
+        refreshToken: response.refreshToken,
+        refreshTokenExpiresAt: response.refreshTokenExpiresAt,
+      })
+
+      return response.accessToken
+    } catch (error) {
+      clearStoredTokens()
+      useAuthStore.getState().clearAuth()
+      window.location.assign('/login')
+      throw error
+    }
   },
 
   async logout(navigate?: (to: string, options?: { replace?: boolean }) => void) {
