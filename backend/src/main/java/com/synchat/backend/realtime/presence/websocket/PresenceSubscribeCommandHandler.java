@@ -12,10 +12,14 @@ import com.synchat.backend.realtime.websocket.EphemeralWebSocketEventSender;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandContext;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandHandler;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandTypes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PresenceSubscribeCommandHandler implements WebSocketCommandHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(PresenceSubscribeCommandHandler.class);
 
     private final ObjectMapper objectMapper;
     private final PresenceService presenceService;
@@ -42,6 +46,14 @@ public class PresenceSubscribeCommandHandler implements WebSocketCommandHandler 
         try {
             commandPayload = objectMapper.treeToValue(payload, PresenceSubscribeCommandPayload.class);
         } catch (Exception exception) {
+            log.warn(
+                    "PresenceSubscribeCommandHandler.handle exception commandType={} requestId={} socketId={} userId={}",
+                    commandType(),
+                    context.requestId(),
+                    context.binding().socketId(),
+                    context.binding().userId(),
+                    exception
+            );
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Invalid payload.");
         }
 

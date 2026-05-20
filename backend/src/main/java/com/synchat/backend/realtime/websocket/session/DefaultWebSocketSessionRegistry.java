@@ -79,7 +79,12 @@ public class DefaultWebSocketSessionRegistry implements WebSocketSessionRegistry
             redisTemplate.opsForSet().add(deviceSessionKey(binding.deviceId()), socketId);
             redisTemplate.opsForValue().set(socketKey(socketId), objectMapper.writeValueAsString(binding));
         } catch (Exception exception) {
-            log.warn("Failed to write websocket session binding to Redis.", exception);
+            log.warn(
+                    "DefaultWebSocketSessionRegistry.writeRedisBinding exception commandType=registry.register requestId=null socketId={} userId={}",
+                    binding.socketId(),
+                    binding.userId(),
+                    exception
+            );
         }
     }
 
@@ -99,7 +104,12 @@ public class DefaultWebSocketSessionRegistry implements WebSocketSessionRegistry
             deleteIfEmpty(userSessionsKey);
             deleteIfEmpty(deviceSessionKey);
         } catch (Exception exception) {
-            log.warn("Failed to remove websocket session binding from Redis.", exception);
+            log.warn(
+                    "DefaultWebSocketSessionRegistry.removeRedisBinding exception commandType=registry.unregister requestId=null socketId={} userId={}",
+                    binding.socketId(),
+                    binding.userId(),
+                    exception
+            );
         }
     }
 

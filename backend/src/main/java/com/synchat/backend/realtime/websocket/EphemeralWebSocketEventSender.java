@@ -34,7 +34,13 @@ public class EphemeralWebSocketEventSender {
         try {
             session.sendMessage(new TextMessage(json));
         } catch (Exception exception) {
-            log.warn("Failed to send ephemeral websocket event.", exception);
+            log.warn(
+                    "EphemeralWebSocketEventSender.sendToSocket exception commandType={} requestId={} socketId={} userId=null",
+                    type,
+                    requestId,
+                    socketId,
+                    exception
+            );
         }
     }
 
@@ -43,6 +49,12 @@ public class EphemeralWebSocketEventSender {
             EphemeralWebSocketEventEnvelope envelope = new EphemeralWebSocketEventEnvelope(type, requestId, payload);
             return objectMapper.writeValueAsString(envelope);
         } catch (Exception exception) {
+            log.warn(
+                    "EphemeralWebSocketEventSender.serializeEvent exception commandType={} requestId={} socketId=null userId=null",
+                    type,
+                    requestId,
+                    exception
+            );
             throw new AppException(ErrorCode.INTERNAL_ERROR, "Failed to serialize websocket event.");
         }
     }

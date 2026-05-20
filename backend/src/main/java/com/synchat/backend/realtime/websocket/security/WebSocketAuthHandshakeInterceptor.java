@@ -5,6 +5,8 @@ import com.synchat.backend.common.security.AuthPrincipal;
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -15,6 +17,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class WebSocketAuthHandshakeInterceptor implements HandshakeInterceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketAuthHandshakeInterceptor.class);
 
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -43,6 +47,10 @@ public class WebSocketAuthHandshakeInterceptor implements HandshakeInterceptor {
 
             return true;
         } catch (AppException | IllegalArgumentException exception) {
+            log.warn(
+                    "WebSocketAuthHandshakeInterceptor.beforeHandshake exception commandType=handshake requestId=null socketId=null userId=null",
+                    exception
+            );
             return false;
         }
     }

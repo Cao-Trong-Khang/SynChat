@@ -35,7 +35,12 @@ public class WebSocketErrorSender {
             String json = objectMapper.writeValueAsString(envelope);
             session.sendMessage(new TextMessage(json));
         } catch (Exception exception) {
-            log.warn("Failed to send websocket error envelope.", exception);
+            log.warn(
+                    "WebSocketErrorSender.sendError exception commandType=error requestId={} socketId={} userId=null",
+                    requestId,
+                    session.getId(),
+                    exception
+            );
         }
     }
 

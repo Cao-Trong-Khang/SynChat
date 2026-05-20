@@ -47,7 +47,13 @@ public class RealtimeEventPublisher {
                 session.sendMessage(new TextMessage(json));
                 sentCount++;
             } catch (Exception exception) {
-                log.warn("Failed to publish realtime event to websocket session.", exception);
+                log.warn(
+                        "RealtimeEventPublisher.publishToUser exception commandType={} requestId=null socketId={} userId={}",
+                        eventType,
+                        binding.socketId(),
+                        binding.userId(),
+                        exception
+                );
             }
         }
 
@@ -64,6 +70,11 @@ public class RealtimeEventPublisher {
             );
             return objectMapper.writeValueAsString(envelope);
         } catch (Exception exception) {
+            log.warn(
+                    "RealtimeEventPublisher.serializeEvent exception commandType={} requestId=null socketId=null userId=null",
+                    eventType,
+                    exception
+            );
             throw new AppException(ErrorCode.INTERNAL_ERROR, "Failed to serialize realtime event.");
         }
     }

@@ -9,10 +9,14 @@ import com.synchat.backend.realtime.typing.service.TypingService;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandContext;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandHandler;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandTypes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TypingStartCommandHandler implements WebSocketCommandHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(TypingStartCommandHandler.class);
 
     private final ObjectMapper objectMapper;
     private final TypingService typingService;
@@ -29,14 +33,22 @@ public class TypingStartCommandHandler implements WebSocketCommandHandler {
 
     @Override
     public void handle(WebSocketCommandContext context, JsonNode payload) {
-        TypingStartCommandPayload commandPayload = convert(payload, TypingStartCommandPayload.class);
+        TypingStartCommandPayload commandPayload = convert(context, payload, TypingStartCommandPayload.class);
         typingService.startTyping(context.binding(), commandPayload.conversationId());
     }
 
-    private <T> T convert(JsonNode payload, Class<T> payloadType) {
+    private <T> T convert(WebSocketCommandContext context, JsonNode payload, Class<T> payloadType) {
         try {
             return objectMapper.treeToValue(payload, payloadType);
         } catch (Exception exception) {
+            log.warn(
+                    "TypingStartCommandHandler.convert exception commandType={} requestId={} socketId={} userId={}",
+                    commandType(),
+                    context.requestId(),
+                    context.binding().socketId(),
+                    context.binding().userId(),
+                    exception
+            );
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Invalid payload.");
         }
     }

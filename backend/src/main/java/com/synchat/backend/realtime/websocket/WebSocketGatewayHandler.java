@@ -77,6 +77,11 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
         try {
             envelope = objectMapper.readValue(message.getPayload(), WebSocketCommandEnvelope.class);
         } catch (Exception exception) {
+            log.warn(
+                    "WebSocketGatewayHandler.handleTextMessage exception commandType=unknown requestId=null socketId={} userId=null",
+                    session.getId(),
+                    exception
+            );
             errorSender.sendError(
                     session,
                     null,
@@ -95,8 +100,24 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
         try {
             routeAuthenticated(binding.get(), envelope);
         } catch (AppException exception) {
+            log.warn(
+                    "WebSocketGatewayHandler.handleTextMessage exception commandType={} requestId={} socketId={} userId={}",
+                    envelope.type(),
+                    envelope.requestId(),
+                    binding.get().socketId(),
+                    binding.get().userId(),
+                    exception
+            );
             errorSender.sendError(session, envelope.requestId(), exception);
         } catch (Exception exception) {
+            log.warn(
+                    "WebSocketGatewayHandler.handleTextMessage exception commandType={} requestId={} socketId={} userId={}",
+                    envelope.type(),
+                    envelope.requestId(),
+                    binding.get().socketId(),
+                    binding.get().userId(),
+                    exception
+            );
             errorSender.sendError(
                     session,
                     envelope.requestId(),
@@ -144,7 +165,12 @@ public class WebSocketGatewayHandler extends TextWebSocketHandler {
             try {
                 typingService.handleSocketDisconnected(value);
             } catch (Exception exception) {
-                log.warn("Failed to clean up typing state for websocket session.", exception);
+                log.warn(
+                        "WebSocketGatewayHandler.cleanupDisconnectedBinding exception commandType=unknown requestId=null socketId={} userId={}",
+                        value.socketId(),
+                        value.userId(),
+                        exception
+                );
             }
             presenceService.handleSocketDisconnected(value);
         });

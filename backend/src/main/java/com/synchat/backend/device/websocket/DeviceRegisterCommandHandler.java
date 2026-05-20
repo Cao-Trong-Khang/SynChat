@@ -12,10 +12,14 @@ import com.synchat.backend.realtime.websocket.command.WebSocketCommandContext;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandHandler;
 import com.synchat.backend.realtime.websocket.command.WebSocketCommandTypes;
 import com.synchat.backend.realtime.websocket.session.UserSessionBinding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DeviceRegisterCommandHandler implements WebSocketCommandHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(DeviceRegisterCommandHandler.class);
 
     private static final String DEVICE_REGISTERED = "device.registered";
 
@@ -44,6 +48,14 @@ public class DeviceRegisterCommandHandler implements WebSocketCommandHandler {
         try {
             commandPayload = objectMapper.treeToValue(payload, DeviceRegisterCommandPayload.class);
         } catch (Exception exception) {
+            log.warn(
+                    "DeviceRegisterCommandHandler.handle exception commandType={} requestId={} socketId={} userId={}",
+                    commandType(),
+                    context.requestId(),
+                    context.binding().socketId(),
+                    context.binding().userId(),
+                    exception
+            );
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Invalid payload.");
         }
 
