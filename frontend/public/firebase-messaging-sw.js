@@ -32,9 +32,9 @@ if (hasFirebaseConfig(firebaseConfig)) {
   const messaging = firebase.messaging()
 
   messaging.onBackgroundMessage((payload) => {
-    const title = payload.notification?.title || 'SynChat'
+    const title = payload.data?.title || payload.notification?.title || 'SynChat'
     const options = {
-      body: payload.notification?.body,
+      body: payload.data?.body || payload.notification?.body,
       data: payload.data || {},
     }
 
