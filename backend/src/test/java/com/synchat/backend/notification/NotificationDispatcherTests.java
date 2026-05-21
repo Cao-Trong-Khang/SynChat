@@ -84,10 +84,12 @@ class NotificationDispatcherTests {
         assertThat(request.body()).isEqualTo(notificationData.messagePreview());
         assertThat(request.data()).containsExactlyInAnyOrderEntriesOf(Map.of(
                 "type", "message.created",
+                "eventType", "message.created",
                 "conversationId", notificationData.conversationId().toString(),
                 "senderId", notificationData.senderId().toString(),
                 "messageSeq", notificationData.messageSeq().toString(),
-                "clientMessageId", notificationData.clientMessageId().toString()
+                "clientMessageId", notificationData.clientMessageId().toString(),
+                "clickAction", "/conversations/" + notificationData.conversationId()
         ));
     }
 

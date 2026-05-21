@@ -22,14 +22,13 @@ public class OutboxWorker {
     public OutboxWorker(
             OutboxClaimService outboxClaimService,
             OutboxPublishService outboxPublishService,
-            AppProperties appProperties
-    ) {
+            AppProperties appProperties) {
         this.outboxClaimService = outboxClaimService;
         this.outboxPublishService = outboxPublishService;
         this.appProperties = appProperties;
     }
 
-    @Scheduled(fixedDelayString = "${app.outbox.fixed-delay-ms:1000}")
+    @Scheduled(fixedDelayString = "${app.outbox.fixed-delay-ms:100}")
     public void publishPendingOutboxEvents() {
         if (!appProperties.outbox().enabled()) {
             return;

@@ -70,10 +70,12 @@ public class DefaultNotificationDispatcher implements NotificationDispatcher {
                     notificationData.messagePreview(),
                     Map.of(
                             "type", MESSAGE_CREATED_EVENT_TYPE,
+                            "eventType", MESSAGE_CREATED_EVENT_TYPE,
                             "conversationId", notificationData.conversationId().toString(),
                             "senderId", notificationData.senderId().toString(),
                             "messageSeq", notificationData.messageSeq().toString(),
-                            "clientMessageId", notificationData.clientMessageId().toString()
+                            "clientMessageId", notificationData.clientMessageId().toString(),
+                            "clickAction", "/conversations/" + notificationData.conversationId()
                     )
             ));
         } catch (Exception exception) {
