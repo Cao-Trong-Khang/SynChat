@@ -1,5 +1,4 @@
 import { env } from '@/config/env'
-import { getStoredTokens } from '@/features/auth/tokenStorage'
 
 import { ApiError, type ApiErrorPayload } from './apiError'
 
@@ -21,24 +20,71 @@ function isPublicAuthPath(path: string) {
   return PUBLIC_AUTH_PATHS.some((publicPath) => path === publicPath)
 }
 
-async function request<TResponse>(
+async function getAuthService() {
+  return (await import('@/features/auth/authService')).authService
+}
+
+async function getAccessTokenForRequest(path: string) {
+  if (isPublicAuthPath(path)) {
+    return null
+  }
+
+  const authService = await getAuthService()
+
+  return authService.ensureFreshAccessToken()
+}
+
+async function executeRequest(
   path: string,
   { body, headers, method = 'GET' }: RequestOptions = {},
-): Promise<TResponse> {
-  const tokens = getStoredTokens()
-  const shouldAttachAuth = tokens.accessToken && !isPublicAuthPath(path)
-
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
+  accessToken: null | string,
+) {
+  return fetch(`${env.apiBaseUrl}${path}`, {
     body: body === undefined ? undefined : JSON.stringify(body),
     headers: {
       'Content-Type': 'application/json',
-      ...(shouldAttachAuth
-        ? { Authorization: `Bearer ${tokens.accessToken}` }
-        : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...headers,
     },
     method,
   })
+}
+
+async function request<TResponse>(
+  path: string,
+  { body, headers, method = 'GET' }: RequestOptions = {},
+): Promise<TResponse> {
+  const isProtectedRequest = !isPublicAuthPath(path)
+  const accessToken = await getAccessTokenForRequest(path)
+
+  let response = await executeRequest(
+    path,
+    { body, headers, method },
+    accessToken,
+  )
+
+  if (isProtectedRequest && response.status === 401) {
+    try {
+      const authService = await getAuthService()
+      const refreshedAccessToken = await authService.ensureFreshAccessToken({
+        forceRefresh: true,
+      })
+
+      response = await executeRequest(
+        path,
+        { body, headers, method },
+        refreshedAccessToken,
+      )
+
+      if (response.status === 401) {
+        await authService.forceLogout('Unauthorized after refreshing token.')
+      }
+    } catch (error) {
+      const authService = await getAuthService()
+      await authService.forceLogout('Failed to refresh token for request.')
+      throw error
+    }
+  }
 
   if (!response.ok) {
     throw await createApiError(response)

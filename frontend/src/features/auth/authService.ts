@@ -25,17 +25,55 @@ import {
 } from './tokenStorage'
 
 const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60_000
+let refreshPromise: Promise<string> | null = null
 
-function isAccessTokenFreshEnough(accessTokenExpiresAt?: string) {
-  if (!accessTokenExpiresAt) {
+function isTokenValidForMoreThan(expiresAtValue: string | undefined, bufferMs: number) {
+  if (!expiresAtValue) {
     return false
   }
 
-  const expiresAt = new Date(accessTokenExpiresAt).getTime()
+  const expiresAt = new Date(expiresAtValue).getTime()
 
-  return Number.isFinite(expiresAt)
-    ? expiresAt - Date.now() > ACCESS_TOKEN_REFRESH_BUFFER_MS
-    : false
+  return Number.isFinite(expiresAt) ? expiresAt - Date.now() > bufferMs : false
+}
+
+function isAccessTokenFreshEnough(accessTokenExpiresAt?: string) {
+  return isTokenValidForMoreThan(
+    accessTokenExpiresAt,
+    ACCESS_TOKEN_REFRESH_BUFFER_MS,
+  )
+}
+
+function isRefreshTokenExpired(refreshTokenExpiresAt?: string) {
+  if (!refreshTokenExpiresAt) {
+    return false
+  }
+
+  return !isTokenValidForMoreThan(refreshTokenExpiresAt, 0)
+}
+
+async function clearLocalSession(navigateToLogin = true) {
+  websocketManager.close()
+  useWebSocketStore.getState().reset()
+  clearStoredTokens()
+  useAuthStore.getState().clearAuth()
+  useShellStore.getState().reset()
+  usePresenceStore.getState().clearAll()
+  useTypingStore.getState().clearAll()
+  useComposerDraftStore.getState().clearAll()
+  useSyncStore.getState().reset()
+  useNotificationStore.getState().reset()
+  notificationService.resetRuntime()
+
+  try {
+    await clearLocalDatabase()
+  } catch (error) {
+    console.warn('Failed to clear local SynChat cache.', error)
+  }
+
+  if (navigateToLogin && window.location.pathname !== '/login') {
+    window.location.assign('/login')
+  }
 }
 
 export const authService = {
@@ -69,43 +107,61 @@ export const authService = {
     return response
   },
 
-  async ensureFreshAccessToken() {
+  async ensureFreshAccessToken(options: { forceRefresh?: boolean } = {}) {
     const tokens = getStoredTokens()
 
     if (
+      !options.forceRefresh &&
       tokens.accessToken &&
       isAccessTokenFreshEnough(tokens.accessTokenExpiresAt)
     ) {
       return tokens.accessToken
     }
 
-    if (!tokens.refreshToken) {
-      clearStoredTokens()
-      useAuthStore.getState().clearAuth()
-      window.location.assign('/login')
+    if (
+      !tokens.refreshToken ||
+      isRefreshTokenExpired(tokens.refreshTokenExpiresAt)
+    ) {
+      await authService.forceLogout('Missing or expired refresh token.')
       throw new Error('Missing refresh token.')
     }
 
-    try {
-      const response = await authApi.refresh({
-        deviceId: getOrCreateDeviceId(),
-        refreshToken: tokens.refreshToken,
-      })
+    if (!refreshPromise) {
+      refreshPromise = authApi
+        .refresh({
+          deviceId: getOrCreateDeviceId(),
+          refreshToken: tokens.refreshToken,
+        })
+        .then((response) => {
+          updateStoredTokens({
+            accessToken: response.accessToken,
+            accessTokenExpiresAt: response.accessTokenExpiresAt,
+            refreshToken: response.refreshToken,
+            refreshTokenExpiresAt: response.refreshTokenExpiresAt,
+          })
 
-      updateStoredTokens({
-        accessToken: response.accessToken,
-        accessTokenExpiresAt: response.accessTokenExpiresAt,
-        refreshToken: response.refreshToken,
-        refreshTokenExpiresAt: response.refreshTokenExpiresAt,
-      })
-
-      return response.accessToken
-    } catch (error) {
-      clearStoredTokens()
-      useAuthStore.getState().clearAuth()
-      window.location.assign('/login')
-      throw error
+          return response.accessToken
+        })
+        .catch(async (error: unknown) => {
+          await authService.forceLogout('Failed to refresh access token.')
+          throw error
+        })
+        .finally(() => {
+          refreshPromise = null
+        })
     }
+
+    return refreshPromise
+  },
+
+  async forceLogout(reason?: string) {
+    if (reason) {
+      console.warn(reason)
+    }
+
+    useWebSocketStore.getState().setShuttingDownRealtime(true)
+    refreshPromise = null
+    await clearLocalSession()
   },
 
   async logout(navigate?: (to: string, options?: { replace?: boolean }) => void) {
@@ -131,21 +187,10 @@ export const authService = {
     }
 
     websocketManager.close()
-    useWebSocketStore.getState().reset()
-    clearStoredTokens()
-    useAuthStore.getState().clearAuth()
-    useShellStore.getState().reset()
-    usePresenceStore.getState().clearAll()
-    useTypingStore.getState().clearAll()
-    useComposerDraftStore.getState().clearAll()
-    useSyncStore.getState().reset()
-    useNotificationStore.getState().reset()
-    notificationService.resetRuntime()
+    refreshPromise = null
 
     try {
-      await clearLocalDatabase()
-    } catch (error) {
-      console.warn('Failed to clear local SynChat cache on logout.', error)
+      await clearLocalSession(false)
     } finally {
       if (navigate) {
         navigate('/login', { replace: true })

@@ -41,7 +41,7 @@ app:
   outbox:
     enabled: true
     batch-size: 50
-    fixed-delay-ms: 1000
+    fixed-delay-ms: 100
 
   notification:
     fcm:
