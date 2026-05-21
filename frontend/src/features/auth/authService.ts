@@ -7,6 +7,7 @@ import { presenceService } from '@/features/presence/presenceService'
 import { useWebSocketStore } from '@/features/realtime/websocketStore'
 import { websocketManager } from '@/features/realtime/websocketManager'
 import { useShellStore } from '@/features/shell/shellStore'
+import { useSyncStore } from '@/features/sync/syncStore'
 import { typingService } from '@/features/typing/typingService'
 import { useTypingStore } from '@/features/typing/typingStore'
 
@@ -134,6 +135,7 @@ export const authService = {
     usePresenceStore.getState().clearAll()
     useTypingStore.getState().clearAll()
     useComposerDraftStore.getState().clearAll()
+    useSyncStore.getState().reset()
 
     try {
       await clearLocalDatabase()

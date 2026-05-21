@@ -89,6 +89,7 @@ export const websocketManager = {
   close() {
     intentionalClose = true
     activeConnectionKey = null
+    hasConnectedAtLeastOnce = false
     clearReconnectTimer()
     client.close()
     reconnectPolicy.reset()

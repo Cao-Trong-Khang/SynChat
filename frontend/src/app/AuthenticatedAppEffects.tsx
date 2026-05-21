@@ -12,6 +12,7 @@ const connectedUserIds = new Set<string>()
 export function AuthenticatedAppEffects() {
   const currentUser = useAuthStore((state) => state.currentUser)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const sessionId = useAuthStore((state) => state.sessionId)
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -19,28 +20,32 @@ export function AuthenticatedAppEffects() {
       return
     }
 
-    if (syncedUserIds.has(currentUser.id)) {
+    const sessionUserId = `${sessionId}:${currentUser.id}`
+
+    if (syncedUserIds.has(sessionUserId)) {
       return
     }
 
-    syncedUserIds.add(currentUser.id)
+    syncedUserIds.add(sessionUserId)
 
     void firstOpenSync().catch((error: unknown) => {
       console.error('Failed to run first-open sync.', error)
-      syncedUserIds.delete(currentUser.id)
+      syncedUserIds.delete(sessionUserId)
     })
-  }, [currentUser, isAuthenticated])
+  }, [currentUser, isAuthenticated, sessionId])
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
       return
     }
 
-    if (connectedUserIds.has(currentUser.id)) {
+    const sessionUserId = `${sessionId}:${currentUser.id}`
+
+    if (connectedUserIds.has(sessionUserId)) {
       return
     }
 
-    connectedUserIds.add(currentUser.id)
+    connectedUserIds.add(sessionUserId)
 
     void authService
       .ensureFreshAccessToken()
@@ -49,14 +54,14 @@ export function AuthenticatedAppEffects() {
       })
       .catch((error: unknown) => {
         console.error('Failed to connect SynChat WebSocket.', error)
-        connectedUserIds.delete(currentUser.id)
+        connectedUserIds.delete(sessionUserId)
       })
 
     return () => {
-      connectedUserIds.delete(currentUser.id)
+      connectedUserIds.delete(sessionUserId)
       websocketManager.close()
     }
-  }, [currentUser, isAuthenticated])
+  }, [currentUser, isAuthenticated, sessionId])
 
   return null
 }
