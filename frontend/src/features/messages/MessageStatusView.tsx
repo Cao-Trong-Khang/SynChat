@@ -1,10 +1,10 @@
 import { Check, CheckCheck } from 'lucide-react'
 
 import type { LocalMessage, LocalUser } from '@/db/models'
-import { Avatar } from '@/shared/components/Avatar'
 
 import { messageService } from './messageService'
 import { getLocalMessageStatusView } from './messageStatus'
+import { ReadReceiptAvatar } from './ReadReceiptAvatar'
 
 type MessageStatusViewProps = {
   isLastOwnMessage: boolean
@@ -69,11 +69,9 @@ export function MessageStatusView({
     return (
       <div className="mt-1 flex items-center justify-end gap-2 pr-1 text-xs text-zinc-500">
         {time ? <span>{time}</span> : null}
-        <Avatar
+        <ReadReceiptAvatar
           alt={status.label}
-          className="size-3.5 bg-blue-100 text-[7px] text-blue-700"
-          name={peerUser?.displayName ?? 'Read'}
-          src={peerUser?.avatarUrl ?? undefined}
+          peerUser={peerUser}
         />
       </div>
     )
