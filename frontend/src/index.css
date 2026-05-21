@@ -15,3 +15,31 @@ body {
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes wave-hand {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  15% {
+    transform: rotate(14deg);
+  }
+
+  30% {
+    transform: rotate(-8deg);
+  }
+
+  45% {
+    transform: rotate(14deg);
+  }
+
+  60% {
+    transform: rotate(-4deg);
+  }
+}
+
+.animate-wave-hand {
+  animation: wave-hand 1.8s ease-in-out infinite;
+  display: inline-block;
+}

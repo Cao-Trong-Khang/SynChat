@@ -166,9 +166,20 @@ export function MessageList({
         className="scrollbar-hidden flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 text-center"
         ref={scrollRef}
       >
-        <p className="text-sm text-zinc-500">
-          {isLoadingLatest ? 'Loading messages...' : 'No messages yet'}
-        </p>
+        {isLoadingLatest ? (
+          <p className="text-sm text-zinc-500">Loading messages...</p>
+        ) : (
+          <div className="flex flex-col items-center">
+            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-blue-50 text-3xl text-[#005ae0]">
+              <span aria-hidden="true" className="animate-wave-hand origin-[70%_70%]">
+                👋
+              </span>
+            </div>
+            <p className="text-sm font-medium text-zinc-900">
+              Say hello to each other
+            </p>
+          </div>
+        )}
       </div>
     )
   }
