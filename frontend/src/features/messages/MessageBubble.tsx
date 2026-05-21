@@ -32,7 +32,7 @@ export function MessageBubble({
   const time = showTime ? formatMessageTime(message.createdAt) : ''
 
   return (
-    <div className={isMine ? 'flex justify-end' : 'flex justify-start gap-2'}>
+    <div className={isMine ? 'flex justify-end' : 'flex justify-start gap-3'}>
       {!isMine ? (
         <div className="w-8 shrink-0">
           {showAvatar ? (
