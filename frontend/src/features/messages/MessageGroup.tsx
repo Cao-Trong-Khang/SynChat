@@ -45,7 +45,7 @@ export function MessageGroup({
                 peerDeliveredSeq={peerDeliveredSeq}
                 peerReadSeq={peerReadSeq}
                 peerUser={peerUser}
-                showTime={isLastInGroup}
+                showTime={false}
               />
             ) : null}
           </div>
