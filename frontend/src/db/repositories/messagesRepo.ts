@@ -198,4 +198,33 @@ export function countByConversationLocalId(conversationLocalId: string) {
     .count()
 }
 
+export async function getNewestSeqByConversationLocalId(
+  conversationLocalId: string,
+  senderId?: string,
+) {
+  const messages = await db.messages
+    .where('conversationLocalId')
+    .equals(conversationLocalId)
+    .filter((message) => {
+      if (message.seq === null) {
+        return false
+      }
+
+      if (!senderId) {
+        return true
+      }
+
+      return message.senderId === senderId
+    })
+    .toArray()
+
+  return messages.reduce<null | number>((newestSeq, message) => {
+    if (message.seq === null) {
+      return newestSeq
+    }
+
+    return Math.max(newestSeq ?? message.seq, message.seq)
+  }, null)
+}
+
 export { useObserveByConversationLocalId as observeByConversationLocalId }

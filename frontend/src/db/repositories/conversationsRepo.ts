@@ -17,6 +17,13 @@ export async function updateConversationPreview(
   await db.conversations.update(localId, patch)
 }
 
+export async function updateConversationUnreadCount(
+  localId: string,
+  unreadCount: number,
+) {
+  await db.conversations.update(localId, { unreadCount })
+}
+
 export function getByLocalId(localId: string) {
   return db.conversations.get(localId)
 }

@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 
 import { observeConversation } from '@/db/repositories/conversationsRepo'
+import { getNewestSeqByConversationLocalId } from '@/db/repositories/messagesRepo'
 import { observeUser } from '@/db/repositories/usersRepo'
+import { receiptService } from '@/features/receipts/receiptService'
 import { typingService } from '@/features/typing/typingService'
 import { useTypingStore } from '@/features/typing/typingStore'
 import { TypingIndicator } from '@/features/typing/TypingIndicator'
@@ -46,6 +48,9 @@ function ExistingConversationDetail({
       conversation?.serverId,
     )
   const serverConversationId = conversation?.serverId ?? null
+  const lastMessageSeq = conversation?.lastMessageSeq ?? null
+  const peerUserId = conversation?.peerUserId
+  const unreadCount = conversation?.unreadCount ?? 0
 
   useEffect(() => {
     if (!serverConversationId) {
@@ -59,6 +64,42 @@ function ExistingConversationDetail({
       useTypingStore.getState().clearConversation(serverConversationId)
     }
   }, [serverConversationId])
+
+  useEffect(() => {
+    if (!serverConversationId || unreadCount <= 0) {
+      return
+    }
+
+    let cancelled = false
+
+    async function markOpenConversationRead() {
+      const newestPeerSeq = peerUserId
+        ? await getNewestSeqByConversationLocalId(conversationLocalId, peerUserId)
+        : null
+      const newestSeq =
+        newestPeerSeq ??
+        lastMessageSeq ??
+        (await getNewestSeqByConversationLocalId(conversationLocalId))
+
+      if (cancelled) {
+        return
+      }
+
+      await receiptService.markReadUpTo(conversationLocalId, newestSeq)
+    }
+
+    void markOpenConversationRead()
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    conversationLocalId,
+    lastMessageSeq,
+    peerUserId,
+    serverConversationId,
+    unreadCount,
+  ])
 
   return (
     <ChatDetailContent

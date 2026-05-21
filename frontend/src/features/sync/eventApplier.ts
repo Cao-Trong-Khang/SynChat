@@ -7,9 +7,11 @@ import {
   set as setSyncState,
 } from '@/db/repositories/syncStateRepo'
 import { upsertUser } from '@/db/repositories/usersRepo'
+import { useAuthStore } from '@/features/auth/authStore'
 import { mapConversationMetadataToLocal } from '@/features/conversations/conversationMapper'
 import { mapMessageCreatedToServerUpsertInput } from '@/features/messages/messageMapper'
 import { markMessageSendOutboxDone } from '@/features/outbox/outboxService'
+import { receiptService } from '@/features/receipts/receiptService'
 import { useShellStore } from '@/features/shell/shellStore'
 
 import type {
@@ -99,6 +101,33 @@ export const eventApplier = {
       selectedChat.peerUserId === envelope.payload.conversation.peer.id
     ) {
       useShellStore.getState().selectConversation(appliedConversationLocalId)
+    }
+
+    if (!appliedConversationLocalId) {
+      return
+    }
+
+    const currentUserId = useAuthStore.getState().currentUser?.id
+
+    if (envelope.payload.message.senderId === currentUserId) {
+      return
+    }
+
+    await receiptService.markDeliveredUpTo(
+      appliedConversationLocalId,
+      envelope.payload.message.seq,
+    )
+
+    const updatedSelectedChat = useShellStore.getState().selectedChat
+
+    if (
+      updatedSelectedChat.kind === 'conversation' &&
+      updatedSelectedChat.conversationLocalId === appliedConversationLocalId
+    ) {
+      await receiptService.markReadUpTo(
+        appliedConversationLocalId,
+        envelope.payload.message.seq,
+      )
     }
   },
 }
