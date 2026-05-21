@@ -24,6 +24,7 @@ export function MessageComposer({
   const setDraft = useComposerDraftStore((state) => state.setDraft)
   const { isSending, sendMessage } = useSendMessage()
   const lastTypingStartAtRef = useRef(0)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const typingStopTimeoutRef = useRef<number | null>(null)
   const trimmedBody = body.trim()
 
@@ -114,6 +115,7 @@ export function MessageComposer({
     if (didInsert) {
       clearDraft(composerKey)
       sendTypingStop()
+      requestAnimationFrame(() => textareaRef.current?.focus())
     }
   }
 
@@ -131,6 +133,7 @@ export function MessageComposer({
           }
         }}
         placeholder="Write a message"
+        ref={textareaRef}
         rows={1}
         value={body}
       />
