@@ -80,6 +80,7 @@ class NotificationDispatcherTests {
         PushNotificationRequest request = requestCaptor.getValue();
         assertThat(request.userId()).isEqualTo(recipientId);
         assertThat(request.pushToken()).isEqualTo("token-1");
+        assertThat(request.pushProvider()).isEqualTo(PushProviders.FCM);
         assertThat(request.title()).isEqualTo(notificationData.senderDisplayName());
         assertThat(request.body()).isEqualTo(notificationData.messagePreview());
         assertThat(request.data()).containsExactlyInAnyOrderEntriesOf(Map.of(
@@ -134,14 +135,29 @@ class NotificationDispatcherTests {
     @Test
     void fcmWebProviderSendsPush() {
         UUID recipientId = UUID.randomUUID();
+        MessageCreatedNotificationData notificationData = notificationData(recipientId);
         when(messageCreatedNotificationParser.parse(recipientId, Map.of()))
-                .thenReturn(Optional.of(notificationData(recipientId)));
+                .thenReturn(Optional.of(notificationData));
         when(pushCandidateResolver.resolveCandidates(recipientId))
                 .thenReturn(List.of(candidate(recipientId, "firebase-web-token-1", PushProviders.FCM_WEB, false, null)));
 
         dispatcher.dispatchForOutboxEvent(recipientId, "message.created", Map.of());
 
-        verify(fcmClient).send(any());
+        ArgumentCaptor<PushNotificationRequest> requestCaptor =
+                ArgumentCaptor.forClass(PushNotificationRequest.class);
+        verify(fcmClient).send(requestCaptor.capture());
+
+        PushNotificationRequest request = requestCaptor.getValue();
+        assertThat(request.pushProvider()).isEqualTo(PushProviders.FCM_WEB);
+        assertThat(request.data()).containsEntry("title", notificationData.senderDisplayName());
+        assertThat(request.data()).containsEntry("body", notificationData.messagePreview());
+        assertThat(request.data()).containsEntry("type", "message.created");
+        assertThat(request.data()).containsEntry("eventType", "message.created");
+        assertThat(request.data()).containsEntry("conversationId", notificationData.conversationId().toString());
+        assertThat(request.data()).containsEntry("senderId", notificationData.senderId().toString());
+        assertThat(request.data()).containsEntry("messageSeq", notificationData.messageSeq().toString());
+        assertThat(request.data()).containsEntry("clientMessageId", notificationData.clientMessageId().toString());
+        assertThat(request.data()).containsEntry("clickAction", "/conversations/" + notificationData.conversationId());
     }
 
     @Test

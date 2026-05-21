@@ -8,6 +8,7 @@ import com.synchat.backend.notification.model.PushCandidate;
 import com.synchat.backend.notification.model.PushNotificationRequest;
 import com.synchat.backend.notification.service.MessageCreatedNotificationParser;
 import com.synchat.backend.notification.service.PushCandidateResolver;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,17 +67,10 @@ public class DefaultNotificationDispatcher implements NotificationDispatcher {
                     notificationData.recipientUserId(),
                     candidate.deviceId(),
                     candidate.pushToken(),
+                    candidate.pushProvider(),
                     notificationData.senderDisplayName(),
                     notificationData.messagePreview(),
-                    Map.of(
-                            "type", MESSAGE_CREATED_EVENT_TYPE,
-                            "eventType", MESSAGE_CREATED_EVENT_TYPE,
-                            "conversationId", notificationData.conversationId().toString(),
-                            "senderId", notificationData.senderId().toString(),
-                            "messageSeq", notificationData.messageSeq().toString(),
-                            "clientMessageId", notificationData.clientMessageId().toString(),
-                            "clickAction", "/conversations/" + notificationData.conversationId()
-                    )
+                    pushData(notificationData, candidate.pushProvider())
             ));
         } catch (Exception exception) {
             log.warn(
@@ -100,5 +94,28 @@ public class DefaultNotificationDispatcher implements NotificationDispatcher {
             return true;
         }
         return DeviceRuntimeStates.BACKGROUND.equals(candidate.runtimeState());
+    }
+
+    private Map<String, String> pushData(
+            MessageCreatedNotificationData notificationData,
+            String pushProvider
+    ) {
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", MESSAGE_CREATED_EVENT_TYPE);
+        data.put("eventType", MESSAGE_CREATED_EVENT_TYPE);
+        data.put("conversationId", notificationData.conversationId().toString());
+        data.put("senderId", notificationData.senderId().toString());
+        data.put("messageSeq", notificationData.messageSeq().toString());
+        if (notificationData.clientMessageId() != null) {
+            data.put("clientMessageId", notificationData.clientMessageId().toString());
+        }
+        data.put("clickAction", "/conversations/" + notificationData.conversationId());
+
+        if (PushProviders.FCM_WEB.equals(pushProvider)) {
+            data.put("title", notificationData.senderDisplayName());
+            data.put("body", notificationData.messagePreview());
+        }
+
+        return data;
     }
 }

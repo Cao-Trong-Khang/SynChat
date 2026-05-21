@@ -150,6 +150,24 @@ class PushCandidateResolverIntegrationTests {
                 .doesNotContain(missingStateDeviceId);
     }
 
+    @Test
+    void duplicatePushTokensAreOnlyReturnedOnce() {
+        UUID firstDeviceId = UUID.randomUUID();
+        UUID secondDeviceId = UUID.randomUUID();
+        when(deviceRepository.findByUserId(userId)).thenReturn(List.of(
+                device(firstDeviceId, "same-token"),
+                device(secondDeviceId, "same-token")
+        ));
+        when(webSocketSessionRegistry.findByDeviceId(firstDeviceId)).thenReturn(List.of());
+        when(webSocketSessionRegistry.findByDeviceId(secondDeviceId)).thenReturn(List.of());
+
+        List<PushCandidate> candidates = pushCandidateResolver.resolveCandidates(userId);
+
+        assertThat(candidates)
+                .extracting(PushCandidate::pushToken)
+                .containsExactly("same-token");
+    }
+
     private DeviceEntity device(UUID deviceId, String pushToken) {
         return DeviceEntity.create(deviceId, userId, "android", pushToken, PushProviders.FCM, Instant.now());
     }

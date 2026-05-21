@@ -7,6 +7,7 @@ public record PushNotificationRequest(
         UUID userId,
         UUID deviceId,
         String pushToken,
+        String pushProvider,
         String title,
         String body,
         Map<String, String> data

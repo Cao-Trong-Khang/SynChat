@@ -7,7 +7,9 @@ import com.google.firebase.messaging.Notification;
 import com.synchat.backend.common.config.AppProperties;
 import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
+import com.synchat.backend.device.model.PushProviders;
 import com.synchat.backend.notification.model.PushNotificationRequest;
+import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +37,24 @@ public class FirebaseFcmClient implements FcmClient {
     @Override
     public void send(PushNotificationRequest request) {
         Message.Builder messageBuilder = Message.builder()
-                .setToken(request.pushToken())
-                .setNotification(Notification.builder()
-                        .setTitle(request.title())
-                        .setBody(request.body())
-                        .build());
+                .setToken(request.pushToken());
 
         Map<String, String> data = request.data();
+        if (PushProviders.FCM_WEB.equals(request.pushProvider())) {
+            Map<String, String> webData = new HashMap<>();
+            if (data != null) {
+                webData.putAll(data);
+            }
+            webData.putIfAbsent("title", request.title());
+            webData.putIfAbsent("body", request.body());
+            data = webData;
+        } else {
+            messageBuilder.setNotification(Notification.builder()
+                    .setTitle(request.title())
+                    .setBody(request.body())
+                    .build());
+        }
+
         if (data != null && !data.isEmpty()) {
             messageBuilder.putAllData(data);
         }
@@ -54,9 +67,23 @@ public class FirebaseFcmClient implements FcmClient {
             } else {
                 messageId = firebaseMessaging.send(message);
             }
-            log.debug("FCM notification sent with messageId={}.", messageId);
+            log.debug(
+                    "FCM notification sent with messageId={} userId={} deviceId={} provider={} tokenSuffix={}.",
+                    messageId,
+                    request.userId(),
+                    request.deviceId(),
+                    request.pushProvider(),
+                    tokenSuffix(request.pushToken())
+            );
         } catch (FirebaseMessagingException exception) {
             throw new AppException(ErrorCode.INTERNAL_ERROR, "Failed to send push notification.");
         }
+    }
+
+    private String tokenSuffix(String pushToken) {
+        if (pushToken == null || pushToken.length() <= 8) {
+            return "unknown";
+        }
+        return pushToken.substring(pushToken.length() - 8);
     }
 }

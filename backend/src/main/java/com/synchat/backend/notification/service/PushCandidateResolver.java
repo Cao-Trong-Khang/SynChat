@@ -5,7 +5,9 @@ import com.synchat.backend.device.repository.DeviceRepository;
 import com.synchat.backend.notification.model.DeviceRuntimeStates;
 import com.synchat.backend.notification.model.PushCandidate;
 import com.synchat.backend.realtime.websocket.session.WebSocketSessionRegistry;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -35,6 +37,16 @@ public class PushCandidateResolver {
                 .filter(device -> hasPushToken(device.getPushToken()))
                 .map(this::toCandidate)
                 .filter(candidate -> shouldPush(candidate.online(), candidate.runtimeState()))
+                .collect(
+                        LinkedHashMap<String, PushCandidate>::new,
+                        (candidatesByToken, candidate) -> candidatesByToken.putIfAbsent(
+                                candidate.pushToken(),
+                                candidate
+                        ),
+                        Map::putAll
+                )
+                .values()
+                .stream()
                 .toList();
     }
 
