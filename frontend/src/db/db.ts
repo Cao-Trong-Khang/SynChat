@@ -32,3 +32,29 @@ export async function initializeDb() {
     await db.open()
   }
 }
+
+export async function clearLocalDatabase() {
+  await initializeDb()
+
+  await db.transaction(
+    'rw',
+    [
+      db.conversations,
+      db.messageSyncState,
+      db.messages,
+      db.outboxCommands,
+      db.syncState,
+      db.users,
+    ],
+    async () => {
+      await Promise.all([
+        db.users.clear(),
+        db.conversations.clear(),
+        db.messages.clear(),
+        db.messageSyncState.clear(),
+        db.syncState.clear(),
+        db.outboxCommands.clear(),
+      ])
+    },
+  )
+}

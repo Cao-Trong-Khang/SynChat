@@ -1,4 +1,5 @@
 import { getNumber as getSyncStateNumber } from '@/db/repositories/syncStateRepo'
+import { useWebSocketStore } from '@/features/realtime/websocketStore'
 import { ApiError } from '@/shared/api/apiError'
 
 import { eventApplier } from './eventApplier'
@@ -10,6 +11,10 @@ let isSyncRunning = false
 
 export const eventSync = {
   async syncEventsFromLastHandledSeq() {
+    if (useWebSocketStore.getState().shuttingDownRealtime) {
+      return
+    }
+
     if (isSyncRunning) {
       console.log('SynChat sync recovery already running.')
       return
@@ -24,6 +29,10 @@ export const eventSync = {
       console.log('SynChat sync recovery started.', { afterSeq })
 
       while (hasMore) {
+        if (useWebSocketStore.getState().shuttingDownRealtime) {
+          return
+        }
+
         const response = await syncApi.syncEvents(afterSeq, EVENT_SYNC_LIMIT)
         const events = [...response.events].sort(
           (left, right) => left.eventSeq - right.eventSeq,

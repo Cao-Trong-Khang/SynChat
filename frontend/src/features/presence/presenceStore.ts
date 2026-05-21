@@ -13,6 +13,7 @@ export type PresenceSnapshotItem = {
 
 type PresenceStore = {
   byUserId: Record<string, PresenceState>
+  clearAll: () => void
   getPresence: (userId: string) => PresenceState | undefined
   removeUsers: (userIds: string[]) => void
   setPresence: (
@@ -25,6 +26,7 @@ type PresenceStore = {
 
 export const usePresenceStore = create<PresenceStore>((set, get) => ({
   byUserId: {},
+  clearAll: () => set({ byUserId: {} }),
   getPresence: (userId) => get().byUserId[userId],
   removeUsers: (userIds) =>
     set((state) => {

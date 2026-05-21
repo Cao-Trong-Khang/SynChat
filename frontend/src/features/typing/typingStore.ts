@@ -4,6 +4,7 @@ const EMPTY_TYPING_USERS: string[] = []
 
 type TypingStore = {
   byConversationId: Record<string, string[]>
+  clearAll: () => void
   clearConversation: (conversationId: string) => void
   clearTyping: (conversationId: string, userId: string) => void
   getTypingUsers: (conversationId: string) => string[]
@@ -12,6 +13,7 @@ type TypingStore = {
 
 export const useTypingStore = create<TypingStore>((set, get) => ({
   byConversationId: {},
+  clearAll: () => set({ byConversationId: {} }),
   clearConversation: (conversationId) =>
     set((state) => {
       if (!state.byConversationId[conversationId]) {

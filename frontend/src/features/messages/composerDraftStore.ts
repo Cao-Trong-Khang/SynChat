@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 type ComposerDraftState = {
+  clearAll: () => void
   drafts: Record<string, string>
   clearDraft: (key: string) => void
   getDraft: (key: string) => string
@@ -8,6 +9,7 @@ type ComposerDraftState = {
 }
 
 export const useComposerDraftStore = create<ComposerDraftState>((set, get) => ({
+  clearAll: () => set({ drafts: {} }),
   drafts: {},
   clearDraft: (key) =>
     set((state) => {

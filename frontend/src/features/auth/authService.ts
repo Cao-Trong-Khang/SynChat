@@ -1,4 +1,14 @@
+import { clearLocalDatabase } from '@/db/db'
 import { getOrCreateDeviceId } from '@/features/device/deviceId'
+import { deviceStateService } from '@/features/device/deviceStateService'
+import { useComposerDraftStore } from '@/features/messages/composerDraftStore'
+import { usePresenceStore } from '@/features/presence/presenceStore'
+import { presenceService } from '@/features/presence/presenceService'
+import { useWebSocketStore } from '@/features/realtime/websocketStore'
+import { websocketManager } from '@/features/realtime/websocketManager'
+import { useShellStore } from '@/features/shell/shellStore'
+import { typingService } from '@/features/typing/typingService'
+import { useTypingStore } from '@/features/typing/typingStore'
 
 import { authApi } from './authApi'
 import type { LoginRequest, RegisterRequest } from './authTypes'
@@ -97,6 +107,13 @@ export const authService = {
 
   async logout(navigate?: (to: string, options?: { replace?: boolean }) => void) {
     const { refreshToken } = getStoredTokens()
+    const websocketStore = useWebSocketStore.getState()
+
+    websocketStore.setShuttingDownRealtime(true)
+
+    presenceService.unsubscribeAllForLogout()
+    typingService.unsubscribeAllForLogout()
+    deviceStateService.markBackground()
 
     try {
       if (refreshToken) {
@@ -105,10 +122,24 @@ export const authService = {
           refreshToken,
         })
       }
-    } finally {
-      clearStoredTokens()
-      useAuthStore.getState().clearAuth()
+    } catch (error) {
+      console.warn('Backend logout failed. Continuing local logout.', error)
+    }
 
+    websocketManager.close()
+    useWebSocketStore.getState().reset()
+    clearStoredTokens()
+    useAuthStore.getState().clearAuth()
+    useShellStore.getState().reset()
+    usePresenceStore.getState().clearAll()
+    useTypingStore.getState().clearAll()
+    useComposerDraftStore.getState().clearAll()
+
+    try {
+      await clearLocalDatabase()
+    } catch (error) {
+      console.warn('Failed to clear local SynChat cache on logout.', error)
+    } finally {
       if (navigate) {
         navigate('/login', { replace: true })
       } else if (window.location.pathname !== '/login') {

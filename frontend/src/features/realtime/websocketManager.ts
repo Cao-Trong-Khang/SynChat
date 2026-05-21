@@ -44,7 +44,12 @@ function clearReconnectTimer() {
 function scheduleReconnect() {
   const authState = useAuthStore.getState()
 
-  if (!authState.isAuthenticated || intentionalClose || reconnectTimerId) {
+  if (
+    !authState.isAuthenticated ||
+    intentionalClose ||
+    reconnectTimerId ||
+    useWebSocketStore.getState().shuttingDownRealtime
+  ) {
     return
   }
 
@@ -62,7 +67,11 @@ function scheduleReconnect() {
 async function reconnect() {
   const authState = useAuthStore.getState()
 
-  if (!authState.isAuthenticated || intentionalClose) {
+  if (
+    !authState.isAuthenticated ||
+    intentionalClose ||
+    useWebSocketStore.getState().shuttingDownRealtime
+  ) {
     return
   }
 
@@ -92,6 +101,11 @@ export const websocketManager = {
   connect(accessToken: string, deviceId: string) {
     const nextConnectionKey = `${deviceId}:${accessToken}`
     const store = useWebSocketStore.getState()
+    const authState = useAuthStore.getState()
+
+    if (!authState.isAuthenticated || store.shuttingDownRealtime) {
+      return
+    }
 
     if (
       activeConnectionKey === nextConnectionKey &&
@@ -129,6 +143,15 @@ export const websocketManager = {
       },
       onOpen: () => {
         const currentStore = useWebSocketStore.getState()
+
+        if (
+          currentStore.shuttingDownRealtime ||
+          !useAuthStore.getState().isAuthenticated
+        ) {
+          client.close()
+          return
+        }
+
         const wasReconnect = hasConnectedAtLeastOnce || currentStore.reconnecting
         hasConnectedAtLeastOnce = true
         reconnectPolicy.reset()

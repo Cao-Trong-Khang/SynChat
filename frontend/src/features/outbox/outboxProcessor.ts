@@ -2,6 +2,7 @@ import type { LocalOutboxCommand } from '@/db/models'
 import { markFailedByClientMessageId } from '@/db/repositories/messagesRepo'
 import { sendCommand } from '@/features/realtime/commandSender'
 import { websocketManager } from '@/features/realtime/websocketManager'
+import { useWebSocketStore } from '@/features/realtime/websocketStore'
 
 import {
   incrementOutboxCommandRetry,
@@ -56,13 +57,20 @@ async function handleSendFailure(command: LocalOutboxCommand) {
 
 export const outboxProcessor = {
   async processPending() {
-    if (!websocketManager.isConnected()) {
+    if (
+      !websocketManager.isConnected() ||
+      useWebSocketStore.getState().shuttingDownRealtime
+    ) {
       return
     }
 
     const pendingCommands = await listPendingOutboxCommands()
 
     for (const command of pendingCommands) {
+      if (useWebSocketStore.getState().shuttingDownRealtime) {
+        return
+      }
+
       if (command.commandType !== 'messages.send') {
         continue
       }
