@@ -17,7 +17,7 @@ export type MessagePageResponse = {
 }
 
 export const messageApi = {
-  loadLatestMessages(conversationId: string, limit = 20) {
+  loadLatestMessages(conversationId: string, limit = 50) {
     const params = new URLSearchParams({ limit: String(limit) })
 
     return httpClient.get<MessagePageResponse>(
@@ -25,7 +25,7 @@ export const messageApi = {
     )
   },
 
-  loadOlderMessages(conversationId: string, beforeSeq: number, limit = 20) {
+  loadOlderMessages(conversationId: string, beforeSeq: number, limit = 50) {
     const params = new URLSearchParams({
       beforeSeq: String(beforeSeq),
       limit: String(limit),

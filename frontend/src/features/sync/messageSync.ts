@@ -11,7 +11,7 @@ import { messageApi } from '@/features/messages/messageApi'
 import { mapServerMessageToUpsertInput } from '@/features/messages/messageMapper'
 
 const LATEST_MESSAGES_LIMIT = 20
-const OLDER_MESSAGES_LIMIT = 20
+const OLDER_MESSAGES_LIMIT = 50
 
 async function upsertServerMessages(
   conversationLocalId: string,
