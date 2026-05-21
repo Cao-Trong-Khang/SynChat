@@ -3,7 +3,9 @@ package com.synchat.backend.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +30,9 @@ import com.synchat.backend.message.service.MessagePaginationService;
 import com.synchat.backend.message.service.MessageSendService;
 import com.synchat.backend.outbox.repository.OutboxEventRepository;
 import com.synchat.backend.outbox.service.OutboxEventAppender;
+import com.synchat.backend.realtime.websocket.session.UserSessionBinding;
+import com.synchat.backend.realtime.websocket.session.WebSocketConnectionStore;
+import com.synchat.backend.realtime.websocket.session.WebSocketSessionRegistry;
 import com.synchat.backend.receipt.service.ReceiptService;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
@@ -36,6 +41,7 @@ import com.synchat.backend.sync.service.UserEventAppender;
 import com.synchat.backend.user.entity.UserEntity;
 import com.synchat.backend.user.repository.UserRepository;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,6 +59,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.web.socket.WebSocketSession;
 
 @ActiveProfiles("test")
 @SpringBootTest(properties = {
@@ -115,6 +122,12 @@ class AuthServiceIntegrationTests {
 
     @MockBean
     private ReceiptService receiptService;
+
+    @MockBean
+    private WebSocketSessionRegistry webSocketSessionRegistry;
+
+    @MockBean
+    private WebSocketConnectionStore webSocketConnectionStore;
 
     private final Map<UUID, UserEntity> usersById = new HashMap<>();
     private final Map<String, UserEntity> usersByEmail = new HashMap<>();
@@ -179,6 +192,8 @@ class AuthServiceIntegrationTests {
             sessionsById.put(session.getId(), session);
             return session;
         });
+
+        when(webSocketSessionRegistry.findByDeviceId(any())).thenReturn(List.of());
     }
 
     @Test
@@ -240,18 +255,112 @@ class AuthServiceIntegrationTests {
     }
 
     @Test
-    void logoutRevokesSessionAndRefreshAfterLogoutFails() {
+    void logoutRevokesSessionAndRefreshAfterLogoutFails() throws Exception {
         authService.register(new RegisterRequest("user@example.com", "password123", "Test User"));
         UUID deviceId = UUID.randomUUID();
         LoginResponse login = authService.login(new LoginRequest("user@example.com", "password123", deviceId, "ios"));
+        DeviceEntity device = devicesById.get(deviceId);
+        device.updatePushToken("fcm-token-1", "fcm", java.time.Instant.now());
+        AuthSessionEntity session = sessionsById.values().iterator().next();
+        WebSocketSession webSocketSession = mock(WebSocketSession.class);
+        when(webSocketSession.isOpen()).thenReturn(true);
+        when(webSocketConnectionStore.findBySocketId("socket-1")).thenReturn(Optional.of(webSocketSession));
+        when(webSocketSessionRegistry.findByDeviceId(deviceId)).thenReturn(List.of(
+                new UserSessionBinding("socket-1", login.user().id(), session.getId(), deviceId, java.time.Instant.now())
+        ));
 
         assertThat(authService.logout(new LogoutRequest(login.refreshToken(), deviceId)).success()).isTrue();
 
-        AuthSessionEntity session = sessionsById.values().iterator().next();
         assertThat(session.getRevokedAt()).isNotNull();
+        assertThat(device.getPushToken()).isNull();
+        assertThat(device.getPushProvider()).isNull();
+        verify(webSocketSession).close();
         assertThatThrownBy(() -> authService.refresh(new RefreshSessionRequest(login.refreshToken(), deviceId)))
                 .isInstanceOfSatisfying(AppException.class,
                         exception -> assertThat(exception.getCode()).isEqualTo(ErrorCode.UNAUTHORIZED));
+    }
+
+    @Test
+    void logoutRevokesOnlyMatchingSessionAndClearsOnlyMatchingDevice() {
+        authService.register(new RegisterRequest("multi@example.com", "password123", "Multi User"));
+        UUID firstDeviceId = UUID.randomUUID();
+        UUID secondDeviceId = UUID.randomUUID();
+        LoginResponse firstLogin = authService.login(new LoginRequest("multi@example.com", "password123", firstDeviceId, "web"));
+        LoginResponse secondLogin = authService.login(new LoginRequest("multi@example.com", "password123", secondDeviceId, "web"));
+        DeviceEntity firstDevice = devicesById.get(firstDeviceId);
+        DeviceEntity secondDevice = devicesById.get(secondDeviceId);
+        firstDevice.updatePushToken("first-token", "fcm_web", java.time.Instant.now());
+        secondDevice.updatePushToken("second-token", "fcm_web", java.time.Instant.now());
+
+        authService.logout(new LogoutRequest(firstLogin.refreshToken(), firstDeviceId));
+
+        AuthSessionEntity firstSession = findSession(firstDeviceId);
+        AuthSessionEntity secondSession = findSession(secondDeviceId);
+        assertThat(firstSession.getRevokedAt()).isNotNull();
+        assertThat(secondSession.getRevokedAt()).isNull();
+        assertThat(firstDevice.getPushToken()).isNull();
+        assertThat(firstDevice.getPushProvider()).isNull();
+        assertThat(secondDevice.getPushToken()).isEqualTo("second-token");
+        assertThat(secondDevice.getPushProvider()).isEqualTo("fcm_web");
+        assertThat(secondLogin.refreshToken()).isNotBlank();
+    }
+
+    @Test
+    void logoutIsIdempotentWhenSessionIsMissing() {
+        UUID deviceId = UUID.randomUUID();
+
+        assertThat(authService.logout(new LogoutRequest("missing-refresh-token", deviceId)).success()).isTrue();
+
+        verify(deviceRepository, never()).save(any());
+        verify(webSocketSessionRegistry, never()).findByDeviceId(deviceId);
+    }
+
+    @Test
+    void logoutIsIdempotentWhenSessionIsAlreadyRevoked() {
+        authService.register(new RegisterRequest("revoked@example.com", "password123", "Revoked User"));
+        UUID deviceId = UUID.randomUUID();
+        LoginResponse login = authService.login(new LoginRequest("revoked@example.com", "password123", deviceId, "web"));
+        AuthSessionEntity session = findSession(deviceId);
+        session.revoke(java.time.Instant.now());
+        DeviceEntity device = devicesById.get(deviceId);
+        device.updatePushToken("token", "fcm_web", java.time.Instant.now());
+
+        assertThat(authService.logout(new LogoutRequest(login.refreshToken(), deviceId)).success()).isTrue();
+
+        assertThat(device.getPushToken()).isEqualTo("token");
+        assertThat(device.getPushProvider()).isEqualTo("fcm_web");
+        verify(webSocketSessionRegistry, never()).findByDeviceId(deviceId);
+    }
+
+    @Test
+    void logoutDoesNotCloseDifferentSessionOnSameDevice() throws Exception {
+        authService.register(new RegisterRequest("socket@example.com", "password123", "Socket User"));
+        UUID deviceId = UUID.randomUUID();
+        LoginResponse login = authService.login(new LoginRequest("socket@example.com", "password123", deviceId, "web"));
+        AuthSessionEntity session = findSession(deviceId);
+        WebSocketSession matchingSocket = mock(WebSocketSession.class);
+        WebSocketSession otherSocket = mock(WebSocketSession.class);
+        when(matchingSocket.isOpen()).thenReturn(true);
+        when(otherSocket.isOpen()).thenReturn(true);
+        when(webSocketConnectionStore.findBySocketId("matching-socket")).thenReturn(Optional.of(matchingSocket));
+        when(webSocketConnectionStore.findBySocketId("other-socket")).thenReturn(Optional.of(otherSocket));
+        when(webSocketSessionRegistry.findByDeviceId(deviceId)).thenReturn(List.of(
+                new UserSessionBinding("matching-socket", login.user().id(), session.getId(), deviceId, java.time.Instant.now()),
+                new UserSessionBinding("other-socket", login.user().id(), UUID.randomUUID(), deviceId, java.time.Instant.now())
+        ));
+
+        authService.logout(new LogoutRequest(login.refreshToken(), deviceId));
+
+        verify(matchingSocket, times(1)).close();
+        verify(otherSocket, never()).close();
+    }
+
+    private AuthSessionEntity findSession(UUID deviceId) {
+        return sessionsById.values()
+                .stream()
+                .filter(session -> session.getDeviceId().equals(deviceId))
+                .findFirst()
+                .orElseThrow();
     }
 
     @TestConfiguration

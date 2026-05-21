@@ -17,6 +17,9 @@ import com.synchat.backend.common.exception.AppException;
 import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.device.entity.DeviceEntity;
 import com.synchat.backend.device.repository.DeviceRepository;
+import com.synchat.backend.realtime.websocket.session.UserSessionBinding;
+import com.synchat.backend.realtime.websocket.session.WebSocketConnectionStore;
+import com.synchat.backend.realtime.websocket.session.WebSocketSessionRegistry;
 import com.synchat.backend.sync.entity.UserEventOffsetEntity;
 import com.synchat.backend.sync.repository.UserEventOffsetRepository;
 import com.synchat.backend.user.entity.UserEntity;
@@ -25,11 +28,16 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.WebSocketSession;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final UserCredentialRepository userCredentialRepository;
@@ -40,6 +48,8 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AccessTokenService accessTokenService;
     private final AppProperties appProperties;
+    private final WebSocketSessionRegistry webSocketSessionRegistry;
+    private final WebSocketConnectionStore webSocketConnectionStore;
 
     public AuthService(
             UserRepository userRepository,
@@ -50,7 +60,9 @@ public class AuthService {
             PasswordService passwordService,
             RefreshTokenService refreshTokenService,
             AccessTokenService accessTokenService,
-            AppProperties appProperties
+            AppProperties appProperties,
+            WebSocketSessionRegistry webSocketSessionRegistry,
+            WebSocketConnectionStore webSocketConnectionStore
     ) {
         this.userRepository = userRepository;
         this.userCredentialRepository = userCredentialRepository;
@@ -61,6 +73,8 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.accessTokenService = accessTokenService;
         this.appProperties = appProperties;
+        this.webSocketSessionRegistry = webSocketSessionRegistry;
+        this.webSocketConnectionStore = webSocketConnectionStore;
     }
 
     @Transactional
@@ -179,11 +193,46 @@ public class AuthService {
         authSessionRepository.findByRefreshTokenHashAndDeviceId(refreshTokenHash, request.deviceId())
                 .filter(session -> session.getRevokedAt() == null)
                 .ifPresent(session -> {
-                    session.revoke(Instant.now());
-                    // TODO: close active websocket sessions for this auth session when realtime gateway is implemented.
+                    Instant now = Instant.now();
+                    session.revoke(now);
+                    clearDevicePushToken(request.deviceId(), now);
+                    closeActiveWebSocketSessions(session);
                 });
 
         return new SuccessResponse(true);
+    }
+
+    private void clearDevicePushToken(UUID deviceId, Instant now) {
+        deviceRepository.findById(deviceId)
+                .ifPresent(device -> {
+                    device.updatePushToken(null, null, now);
+                    deviceRepository.save(device);
+                });
+    }
+
+    private void closeActiveWebSocketSessions(AuthSessionEntity session) {
+        for (UserSessionBinding binding : webSocketSessionRegistry.findByDeviceId(session.getDeviceId())) {
+            if (!session.getId().equals(binding.sessionId())) {
+                continue;
+            }
+
+            try {
+                WebSocketSession webSocketSession = webSocketConnectionStore
+                        .findBySocketId(binding.socketId())
+                        .orElse(null);
+                if (webSocketSession != null && webSocketSession.isOpen()) {
+                    webSocketSession.close();
+                }
+            } catch (Exception exception) {
+                log.warn(
+                        "Failed to close websocket session during logout socketId={} userId={} sessionId={}.",
+                        binding.socketId(),
+                        binding.userId(),
+                        binding.sessionId(),
+                        exception
+                );
+            }
+        }
     }
 
     private AppException invalidCredentials() {
