@@ -167,7 +167,10 @@ function ChatDetailContent({
       />
 
       <footer className="border-t border-zinc-200 bg-white px-5 py-4">
-        <TypingIndicator conversationId={serverConversationId} />
+        <TypingIndicator
+          conversationId={serverConversationId}
+          peerUser={peerUser}
+        />
         <MessageComposer
           composerKey={composerKey}
           serverConversationId={serverConversationId}
