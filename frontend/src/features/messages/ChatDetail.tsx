@@ -43,6 +43,7 @@ function ExistingConversationDetail({
 
   return (
     <ChatDetailContent
+      composerKey={conversationLocalId}
       conversationLocalId={conversationLocalId}
       hasMoreBefore={hasMoreBefore}
       isLoadingLatest={isLoadingLatest}
@@ -56,10 +57,16 @@ function ExistingConversationDetail({
 function DraftChatDetail({ peerUserId }: { peerUserId: string }) {
   const peerUser = observeUser(peerUserId)
 
-  return <ChatDetailContent peerUser={peerUser} />
+  return (
+    <ChatDetailContent
+      composerKey={`direct:${peerUserId}`}
+      peerUser={peerUser}
+    />
+  )
 }
 
 function ChatDetailContent({
+  composerKey,
   conversationLocalId,
   hasMoreBefore,
   isLoadingLatest,
@@ -67,6 +74,7 @@ function ChatDetailContent({
   loadingOlder,
   peerUser,
 }: {
+  composerKey: string
   conversationLocalId?: string
   hasMoreBefore?: boolean
   isLoadingLatest?: boolean
@@ -88,7 +96,7 @@ function ChatDetailContent({
       />
 
       <footer className="border-t border-zinc-800 px-5 py-4">
-        <MessageComposer />
+        <MessageComposer composerKey={composerKey} />
       </footer>
     </div>
   )

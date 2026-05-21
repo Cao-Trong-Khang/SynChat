@@ -1,12 +1,17 @@
-import { useState, type FormEvent } from 'react'
+import { type FormEvent } from 'react'
 import { SendHorizonal } from 'lucide-react'
 
 import { Button } from '@/shared/components/Button'
 
+import { useComposerDraftStore } from './composerDraftStore'
 import { useSendMessage } from './useSendMessage'
 
-export function MessageComposer() {
-  const [body, setBody] = useState('')
+export function MessageComposer({ composerKey }: { composerKey: string }) {
+  const body = useComposerDraftStore(
+    (state) => state.drafts[composerKey] ?? '',
+  )
+  const clearDraft = useComposerDraftStore((state) => state.clearDraft)
+  const setDraft = useComposerDraftStore((state) => state.setDraft)
   const { isSending, sendMessage } = useSendMessage()
   const trimmedBody = body.trim()
 
@@ -16,7 +21,7 @@ export function MessageComposer() {
     const didInsert = await sendMessage(body)
 
     if (didInsert) {
-      setBody('')
+      clearDraft(composerKey)
     }
   }
 
@@ -25,7 +30,7 @@ export function MessageComposer() {
       <textarea
         className="max-h-32 min-h-11 flex-1 resize-none rounded-md border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-2 focus:ring-zinc-800"
         disabled={isSending}
-        onChange={(event) => setBody(event.target.value)}
+        onChange={(event) => setDraft(composerKey, event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault()
