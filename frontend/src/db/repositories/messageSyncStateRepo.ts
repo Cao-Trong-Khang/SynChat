@@ -50,19 +50,23 @@ export async function expandRangeForMessageSeq(
   if (!existingState) {
     await db.messageSyncState.add({
       conversationLocalId,
-      hasMoreBefore: true,
+      hasMoreBefore: seq > 1,
       newestLoadedSeq: seq,
       oldestLoadedSeq: seq,
     })
     return
   }
 
+  const oldestLoadedSeq =
+    existingState.oldestLoadedSeq === null
+      ? seq
+      : Math.min(existingState.oldestLoadedSeq, seq)
+
   await db.messageSyncState.update(conversationLocalId, {
+    hasMoreBefore:
+      oldestLoadedSeq <= 1 ? false : existingState.hasMoreBefore,
     newestLoadedSeq: Math.max(existingState.newestLoadedSeq ?? seq, seq),
-    oldestLoadedSeq:
-      existingState.oldestLoadedSeq === null
-        ? seq
-        : Math.min(existingState.oldestLoadedSeq, seq),
+    oldestLoadedSeq,
   })
 }
 

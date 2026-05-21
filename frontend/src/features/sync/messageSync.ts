@@ -5,13 +5,28 @@ import {
 } from '@/db/repositories/messageSyncStateRepo'
 import {
   countByConversationLocalId,
-  upsertMessages,
+  upsertServerMessage,
 } from '@/db/repositories/messagesRepo'
-import { mapServerMessageToLocalMessage } from '@/features/messages/messageMapper'
 import { messageApi } from '@/features/messages/messageApi'
+import { mapServerMessageToUpsertInput } from '@/features/messages/messageMapper'
 
 const LATEST_MESSAGES_LIMIT = 20
 const OLDER_MESSAGES_LIMIT = 20
+
+async function upsertServerMessages(
+  conversationLocalId: string,
+  messages: Awaited<
+    ReturnType<typeof messageApi.loadLatestMessages>
+  >['messages'],
+) {
+  await Promise.all(
+    messages.map((message) =>
+      upsertServerMessage(
+        mapServerMessageToUpsertInput(conversationLocalId, message),
+      ),
+    ),
+  )
+}
 
 export const messageSync = {
   async shouldLoadLatestMessages(conversationLocalId: string) {
@@ -55,11 +70,7 @@ export const messageSync = {
       LATEST_MESSAGES_LIMIT,
     )
 
-    await upsertMessages(
-      response.messages.map((message) =>
-        mapServerMessageToLocalMessage(conversationLocalId, message),
-      ),
-    )
+    await upsertServerMessages(conversationLocalId, response.messages)
 
     const existingState = await getMessageSyncState(conversationLocalId)
     const newestLoadedSeq =
@@ -96,11 +107,7 @@ export const messageSync = {
       OLDER_MESSAGES_LIMIT,
     )
 
-    await upsertMessages(
-      response.messages.map((message) =>
-        mapServerMessageToLocalMessage(conversationLocalId, message),
-      ),
-    )
+    await upsertServerMessages(conversationLocalId, response.messages)
 
     await updateRange(conversationLocalId, {
       hasMoreBefore: response.hasMoreBefore,

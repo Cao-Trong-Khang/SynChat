@@ -1,18 +1,14 @@
 import { db } from '@/db/db'
 import { getByServerId, upsertConversation } from '@/db/repositories/conversationsRepo'
 import { expandRangeForMessageSeq } from '@/db/repositories/messageSyncStateRepo'
-import {
-  getByClientMessageId,
-  replaceByClientMessageId,
-  upsertByConversationLocalIdAndSeq,
-} from '@/db/repositories/messagesRepo'
+import { upsertServerMessage } from '@/db/repositories/messagesRepo'
 import {
   getNumber as getSyncStateNumber,
   set as setSyncState,
 } from '@/db/repositories/syncStateRepo'
 import { upsertUser } from '@/db/repositories/usersRepo'
 import { mapConversationMetadataToLocal } from '@/features/conversations/conversationMapper'
-import { mapMessageCreatedToLocalMessage } from '@/features/messages/messageMapper'
+import { mapMessageCreatedToServerUpsertInput } from '@/features/messages/messageMapper'
 import { markMessageSendOutboxDone } from '@/features/outbox/outboxService'
 
 import type {
@@ -74,30 +70,12 @@ export const eventApplier = {
         await upsertUser(mappedConversation.peer)
         await upsertConversation(mappedConversation.conversation)
 
+        await upsertServerMessage(
+          mapMessageCreatedToServerUpsertInput(conversationLocalId, message),
+        )
+
         if (message.clientMessageId) {
-          const existingMessage = await getByClientMessageId(
-            message.clientMessageId,
-          )
-
-          if (existingMessage) {
-            await replaceByClientMessageId(message.clientMessageId, {
-              body: message.body,
-              conversationLocalId,
-              createdAt: message.createdAtServer,
-              senderId: message.senderId,
-              seq: message.seq,
-            })
-          } else {
-            await upsertByConversationLocalIdAndSeq(
-              mapMessageCreatedToLocalMessage(conversationLocalId, message),
-            )
-          }
-
           await markMessageSendOutboxDone(message.clientMessageId)
-        } else {
-          await upsertByConversationLocalIdAndSeq(
-            mapMessageCreatedToLocalMessage(conversationLocalId, message),
-          )
         }
 
         await expandRangeForMessageSeq(conversationLocalId, message.seq)

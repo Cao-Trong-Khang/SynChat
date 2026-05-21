@@ -15,6 +15,16 @@ type SentMessagePatch = Partial<
   >
 >
 
+export type ServerMessageUpsertInput = {
+  body: string
+  clientMessageId: null | string
+  conversationLocalId: string
+  createdAt: string
+  localStatus: 'sent'
+  senderId: string
+  seq: number
+}
+
 export async function addMessage(message: LocalMessage) {
   await db.messages.add(message)
 }
@@ -125,6 +135,44 @@ export async function upsertByConversationLocalIdAndSeq(
   await upsertMessage({
     ...message,
     localId: existingMessage?.localId ?? message.localId,
+  })
+}
+
+export async function upsertServerMessage(input: ServerMessageUpsertInput) {
+  const patch = {
+    body: input.body,
+    clientMessageId: input.clientMessageId,
+    conversationLocalId: input.conversationLocalId,
+    createdAt: input.createdAt,
+    localStatus: input.localStatus,
+    senderId: input.senderId,
+    seq: input.seq,
+  } satisfies Omit<LocalMessage, 'localId'>
+
+  if (input.clientMessageId) {
+    const existingByClientMessageId = await getByClientMessageId(
+      input.clientMessageId,
+    )
+
+    if (existingByClientMessageId) {
+      await db.messages.update(existingByClientMessageId.localId, patch)
+      return
+    }
+  }
+
+  const existingBySeq = await getByConversationLocalIdAndSeq(
+    input.conversationLocalId,
+    input.seq,
+  )
+
+  if (existingBySeq) {
+    await db.messages.update(existingBySeq.localId, patch)
+    return
+  }
+
+  await db.messages.add({
+    ...patch,
+    localId: `${input.conversationLocalId}:${input.seq}`,
   })
 }
 
