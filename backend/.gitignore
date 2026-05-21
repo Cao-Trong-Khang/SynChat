@@ -39,6 +39,7 @@ service-account*.json
 
 # Environment variables
 .env
+run-dev.ps1
 
 # Logs
 *.log
