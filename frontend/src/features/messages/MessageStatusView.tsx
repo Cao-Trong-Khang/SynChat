@@ -12,6 +12,20 @@ type MessageStatusViewProps = {
   peerDeliveredSeq: number
   peerReadSeq: number
   peerUser: LocalUser | undefined
+  showTime: boolean
+}
+
+function formatMessageTime(createdAt: string) {
+  const date = new Date(createdAt)
+
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
 }
 
 export function MessageStatusView({
@@ -20,6 +34,7 @@ export function MessageStatusView({
   peerDeliveredSeq,
   peerReadSeq,
   peerUser,
+  showTime,
 }: MessageStatusViewProps) {
   const status = getLocalMessageStatusView(
     message,
@@ -32,9 +47,12 @@ export function MessageStatusView({
     return null
   }
 
+  const time = showTime ? formatMessageTime(message.createdAt) : ''
+
   if (status.kind === 'failed') {
     return (
-      <div className="mt-1 flex justify-end gap-2 pr-1 text-xs">
+      <div className="mt-1 flex items-center justify-end gap-2 pr-1 text-xs">
+        {time ? <span className="text-zinc-500">{time}</span> : null}
         <span className="text-red-400">{status.label}</span>
         <button
           className="font-medium text-zinc-700 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400"
@@ -49,10 +67,11 @@ export function MessageStatusView({
 
   if (status.kind === 'read') {
     return (
-      <div className="mt-1 flex justify-end pr-1">
+      <div className="mt-1 flex items-center justify-end gap-2 pr-1 text-xs text-zinc-500">
+        {time ? <span>{time}</span> : null}
         <Avatar
           alt={status.label}
-          className="size-4 bg-blue-100 text-[8px] text-blue-700"
+          className="size-3.5 bg-blue-100 text-[7px] text-blue-700"
           name={peerUser?.displayName ?? 'Read'}
           src={peerUser?.avatarUrl ?? undefined}
         />
@@ -61,13 +80,16 @@ export function MessageStatusView({
   }
 
   return (
-    <p className="mt-1 flex items-center justify-end gap-1 pr-1 text-xs text-zinc-500">
+    <p className="mt-1 flex items-center justify-end gap-2 pr-1 text-xs text-zinc-500">
+      {time ? <span>{time}</span> : null}
+      <span className="flex items-center gap-1">
       {status.kind === 'delivered' ? (
         <CheckCheck aria-hidden="true" className="size-3.5" />
       ) : status.kind === 'sent' ? (
         <Check aria-hidden="true" className="size-3.5" />
       ) : null}
       <span>{status.label}</span>
+      </span>
     </p>
   )
 }

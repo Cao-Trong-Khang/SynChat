@@ -36,7 +36,7 @@ export function MessageGroup({
               message={message}
               peerUser={peerUser}
               showAvatar={!isMine && index === 0}
-              showTime={isLastInGroup}
+              showTime={isLastInGroup && !isLastOwnMessage}
             />
             {isMine ? (
               <MessageStatusView
@@ -45,6 +45,7 @@ export function MessageGroup({
                 peerDeliveredSeq={peerDeliveredSeq}
                 peerReadSeq={peerReadSeq}
                 peerUser={peerUser}
+                showTime={isLastInGroup}
               />
             ) : null}
           </div>
