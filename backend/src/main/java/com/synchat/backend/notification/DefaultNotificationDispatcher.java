@@ -90,7 +90,8 @@ public class DefaultNotificationDispatcher implements NotificationDispatcher {
         if (candidate.pushToken() == null || candidate.pushToken().isBlank()) {
             return false;
         }
-        if (!PushProviders.FCM.equals(candidate.pushProvider())) {
+        if (!PushProviders.FCM.equals(candidate.pushProvider())
+                && !PushProviders.FCM_WEB.equals(candidate.pushProvider())) {
             return false;
         }
         if (!candidate.online()) {

@@ -72,7 +72,7 @@ public class DeviceService {
         }
 
         String platform = normalizeRequired(payload.platform(), "platform is required.");
-        if (!DevicePlatforms.ANDROID.equals(platform)) {
+        if (!isAllowedPlatform(platform)) {
             throw validation("Invalid platform.");
         }
 
@@ -87,7 +87,7 @@ public class DeviceService {
             if (pushProvider == null) {
                 throw validation("Push provider is required.");
             }
-            if (!PushProviders.FCM.equals(pushProvider)) {
+            if (!isAllowedPushProvider(pushProvider)) {
                 throw validation("Invalid push provider.");
             }
         }
@@ -107,6 +107,16 @@ public class DeviceService {
             throw validation(message);
         }
         return normalized;
+    }
+
+    private boolean isAllowedPlatform(String platform) {
+        return DevicePlatforms.ANDROID.equals(platform)
+                || DevicePlatforms.WEB.equals(platform);
+    }
+
+    private boolean isAllowedPushProvider(String pushProvider) {
+        return PushProviders.FCM.equals(pushProvider)
+                || PushProviders.FCM_WEB.equals(pushProvider);
     }
 
     private String normalizeOptional(String value) {

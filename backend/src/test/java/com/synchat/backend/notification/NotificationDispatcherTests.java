@@ -130,6 +130,19 @@ class NotificationDispatcherTests {
     }
 
     @Test
+    void fcmWebProviderSendsPush() {
+        UUID recipientId = UUID.randomUUID();
+        when(messageCreatedNotificationParser.parse(recipientId, Map.of()))
+                .thenReturn(Optional.of(notificationData(recipientId)));
+        when(pushCandidateResolver.resolveCandidates(recipientId))
+                .thenReturn(List.of(candidate(recipientId, "firebase-web-token-1", PushProviders.FCM_WEB, false, null)));
+
+        dispatcher.dispatchForOutboxEvent(recipientId, "message.created", Map.of());
+
+        verify(fcmClient).send(any());
+    }
+
+    @Test
     void deviceWithoutPushTokenIsSkipped() {
         UUID recipientId = UUID.randomUUID();
         when(messageCreatedNotificationParser.parse(recipientId, Map.of()))

@@ -210,6 +210,58 @@ class DeviceRegisterWebSocketIntegrationTests {
     }
 
     @Test
+    void successfulWebDeviceRegisterAcceptsFcmWebToken() throws Exception {
+        LoginFixture fixture = registerAndLogin(DevicePlatforms.WEB);
+        TestWebSocketHandler socket = connect(fixture);
+
+        socket.session().sendMessage(new TextMessage("""
+                {
+                  "type": "devices.register",
+                  "requestId": "req-device-register-web",
+                  "payload": {
+                    "deviceId": "%s",
+                    "platform": "web",
+                    "pushToken": "firebase-web-token-1",
+                    "pushProvider": "fcm_web"
+                  }
+                }
+                """.formatted(fixture.deviceId())));
+
+        JsonNode response = socket.nextJsonMessage(objectMapper);
+        assertDeviceRegistered(response, "req-device-register-web", fixture.deviceId());
+        assertThat(devicesById.get(fixture.deviceId()).getPlatform()).isEqualTo(DevicePlatforms.WEB);
+        assertThat(devicesById.get(fixture.deviceId()).getPushToken()).isEqualTo("firebase-web-token-1");
+        assertThat(devicesById.get(fixture.deviceId()).getPushProvider()).isEqualTo(PushProviders.FCM_WEB);
+        assertNoEventsCreated();
+    }
+
+    @Test
+    void successfulWebDeviceRegisterAllowsClearingPushToken() throws Exception {
+        LoginFixture fixture = registerAndLogin(DevicePlatforms.WEB);
+        TestWebSocketHandler socket = connect(fixture);
+
+        socket.session().sendMessage(new TextMessage("""
+                {
+                  "type": "devices.register",
+                  "requestId": "req-device-clear-web",
+                  "payload": {
+                    "deviceId": "%s",
+                    "platform": "web",
+                    "pushToken": null,
+                    "pushProvider": null
+                  }
+                }
+                """.formatted(fixture.deviceId())));
+
+        JsonNode response = socket.nextJsonMessage(objectMapper);
+        assertDeviceRegistered(response, "req-device-clear-web", fixture.deviceId());
+        assertThat(devicesById.get(fixture.deviceId()).getPlatform()).isEqualTo(DevicePlatforms.WEB);
+        assertThat(devicesById.get(fixture.deviceId()).getPushToken()).isNull();
+        assertThat(devicesById.get(fixture.deviceId()).getPushProvider()).isNull();
+        assertNoEventsCreated();
+    }
+
+    @Test
     void registerWithoutPushTokenSendsRegisteredEventAndClearsPushFields() throws Exception {
         LoginFixture fixture = registerAndLogin();
         TestWebSocketHandler socket = connect(fixture);
@@ -382,6 +434,10 @@ class DeviceRegisterWebSocketIntegrationTests {
     }
 
     private LoginFixture registerAndLogin() {
+        return registerAndLogin(DevicePlatforms.ANDROID);
+    }
+
+    private LoginFixture registerAndLogin(String platform) {
         String email = "device.ws." + UUID.randomUUID() + "@example.com";
         authService.register(new RegisterRequest(email, "password123", "Device User"));
         UUID deviceId = UUID.randomUUID();
@@ -389,7 +445,7 @@ class DeviceRegisterWebSocketIntegrationTests {
                 email,
                 "password123",
                 deviceId,
-                DevicePlatforms.ANDROID
+                platform
         ));
         return new LoginFixture(login, deviceId);
     }

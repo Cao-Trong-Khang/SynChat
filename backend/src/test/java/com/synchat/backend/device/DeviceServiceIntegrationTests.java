@@ -186,6 +186,7 @@ class DeviceServiceIntegrationTests {
 
         deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
                 fixture.deviceId(),
+                DevicePlatforms.ANDROID,
                 "fcm-token-1",
                 PushProviders.FCM
         ));
@@ -198,16 +199,60 @@ class DeviceServiceIntegrationTests {
     }
 
     @Test
+    void registerWebDeviceWithFcmWebTokenUpdatesExistingDevice() {
+        LoginFixture fixture = registerAndLogin(DevicePlatforms.WEB);
+
+        deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
+                fixture.deviceId(),
+                DevicePlatforms.WEB,
+                "firebase-web-token-1",
+                PushProviders.FCM_WEB
+        ));
+
+        DeviceEntity device = devicesById.get(fixture.deviceId());
+        assertThat(device.getPlatform()).isEqualTo(DevicePlatforms.WEB);
+        assertThat(device.getPushToken()).isEqualTo("firebase-web-token-1");
+        assertThat(device.getPushProvider()).isEqualTo(PushProviders.FCM_WEB);
+        assertNoSideEffectsFromDeviceRegistration();
+    }
+
+    @Test
+    void registerWebDeviceWithNullPushTokenClearsPushFields() {
+        LoginFixture fixture = registerAndLogin(DevicePlatforms.WEB);
+        deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
+                fixture.deviceId(),
+                DevicePlatforms.WEB,
+                "firebase-web-token-1",
+                PushProviders.FCM_WEB
+        ));
+
+        deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
+                fixture.deviceId(),
+                DevicePlatforms.WEB,
+                null,
+                null
+        ));
+
+        DeviceEntity device = devicesById.get(fixture.deviceId());
+        assertThat(device.getPlatform()).isEqualTo(DevicePlatforms.WEB);
+        assertThat(device.getPushToken()).isNull();
+        assertThat(device.getPushProvider()).isNull();
+        assertNoSideEffectsFromDeviceRegistration();
+    }
+
+    @Test
     void registerDeviceWithNullPushTokenClearsPushFields() {
         LoginFixture fixture = registerAndLogin();
         deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
                 fixture.deviceId(),
+                DevicePlatforms.ANDROID,
                 "fcm-token-1",
                 PushProviders.FCM
         ));
 
         deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
                 fixture.deviceId(),
+                DevicePlatforms.ANDROID,
                 null,
                 null
         ));
@@ -223,12 +268,14 @@ class DeviceServiceIntegrationTests {
         LoginFixture fixture = registerAndLogin();
         deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
                 fixture.deviceId(),
+                DevicePlatforms.ANDROID,
                 "fcm-token-1",
                 PushProviders.FCM
         ));
 
         deviceService.registerDevice(fixture.userId(), fixture.deviceId(), registerPayload(
                 fixture.deviceId(),
+                DevicePlatforms.ANDROID,
                 "fcm-token-2",
                 PushProviders.FCM
         ));
@@ -261,11 +308,11 @@ class DeviceServiceIntegrationTests {
 
     @Test
     void pushTokenPresentButProviderMissingThrowsValidationError() {
-        LoginFixture fixture = registerAndLogin();
+        LoginFixture fixture = registerAndLogin(DevicePlatforms.WEB);
 
         assertAppException(
                 fixture,
-                registerPayload(fixture.deviceId(), "fcm-token-1", null),
+                registerPayload(fixture.deviceId(), DevicePlatforms.WEB, "firebase-web-token-1", null),
                 ErrorCode.VALIDATION_ERROR
         );
     }
@@ -276,7 +323,7 @@ class DeviceServiceIntegrationTests {
 
         assertAppException(
                 fixture,
-                registerPayload(fixture.deviceId(), null, PushProviders.FCM),
+                registerPayload(fixture.deviceId(), DevicePlatforms.ANDROID, null, PushProviders.FCM),
                 ErrorCode.VALIDATION_ERROR
         );
     }
@@ -287,7 +334,7 @@ class DeviceServiceIntegrationTests {
 
         assertAppException(
                 fixture,
-                registerPayload(fixture.deviceId(), "push-token", "apns"),
+                registerPayload(fixture.deviceId(), DevicePlatforms.WEB, "push-token", "apns"),
                 ErrorCode.VALIDATION_ERROR
         );
     }
@@ -303,15 +350,24 @@ class DeviceServiceIntegrationTests {
         assertNoSideEffectsFromDeviceRegistration();
     }
 
-    private DeviceRegisterCommandPayload registerPayload(UUID deviceId, String pushToken, String pushProvider) {
-        return new DeviceRegisterCommandPayload(deviceId, DevicePlatforms.ANDROID, pushToken, pushProvider);
+    private DeviceRegisterCommandPayload registerPayload(
+            UUID deviceId,
+            String platform,
+            String pushToken,
+            String pushProvider
+    ) {
+        return new DeviceRegisterCommandPayload(deviceId, platform, pushToken, pushProvider);
     }
 
     private LoginFixture registerAndLogin() {
+        return registerAndLogin(DevicePlatforms.ANDROID);
+    }
+
+    private LoginFixture registerAndLogin(String platform) {
         String email = "device." + UUID.randomUUID() + "@example.com";
         authService.register(new RegisterRequest(email, "password123", "Device User"));
         UUID deviceId = UUID.randomUUID();
-        LoginResponse login = authService.login(new LoginRequest(email, "password123", deviceId, "android"));
+        LoginResponse login = authService.login(new LoginRequest(email, "password123", deviceId, platform));
         return new LoginFixture(login.user().id(), deviceId);
     }
 
