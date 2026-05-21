@@ -10,6 +10,7 @@ import { upsertUser } from '@/db/repositories/usersRepo'
 import { mapConversationMetadataToLocal } from '@/features/conversations/conversationMapper'
 import { mapMessageCreatedToServerUpsertInput } from '@/features/messages/messageMapper'
 import { markMessageSendOutboxDone } from '@/features/outbox/outboxService'
+import { useShellStore } from '@/features/shell/shellStore'
 
 import type {
   MessageCreatedEventEnvelope,
@@ -45,6 +46,8 @@ export const eventApplier = {
   },
 
   async applyMessageCreated(envelope: MessageCreatedEventEnvelope) {
+    let appliedConversationLocalId: string | null = null
+
     await db.transaction(
       'rw',
       [
@@ -62,6 +65,7 @@ export const eventApplier = {
         )
         const conversationLocalId =
           existingConversation?.localId ?? `direct:${conversation.peer.id}`
+        appliedConversationLocalId = conversationLocalId
         const mappedConversation = mapConversationMetadataToLocal(
           conversation,
           conversationLocalId,
@@ -86,5 +90,15 @@ export const eventApplier = {
         )
       },
     )
+
+    const selectedChat = useShellStore.getState().selectedChat
+
+    if (
+      appliedConversationLocalId &&
+      selectedChat.kind === 'draft' &&
+      selectedChat.peerUserId === envelope.payload.conversation.peer.id
+    ) {
+      useShellStore.getState().selectConversation(appliedConversationLocalId)
+    }
   },
 }
