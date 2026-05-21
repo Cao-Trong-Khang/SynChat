@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import presenceIllustration from '@/assets/landing/presence.png'
@@ -34,6 +34,16 @@ const slides = [
 
 export function LandingView() {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setActiveSlideIndex((current) =>
+        current === slides.length - 1 ? 0 : current + 1,
+      )
+    }, 3_500)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   function showPreviousSlide() {
     setActiveSlideIndex((current) =>
