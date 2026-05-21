@@ -31,25 +31,25 @@ export function UserSearchResultItem({ user }: UserSearchResultItemProps) {
 
   return (
     <button
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-zinc-600 disabled:cursor-wait disabled:opacity-70"
+      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-zinc-400 disabled:cursor-wait disabled:opacity-70"
       disabled={isOpening}
       onClick={handleOpenUser}
       type="button"
     >
       <div className="relative shrink-0">
         <Avatar
-          className="bg-zinc-800 text-zinc-100"
+          className="bg-blue-100 text-blue-700"
           name={user.displayName}
           src={user.avatarUrl ?? undefined}
         />
         <OnlineStatus
-          className="absolute bottom-0 right-0 size-3 border-2 border-zinc-950"
+          className="absolute bottom-0 right-0 size-3 border-2 border-white"
           online={presence?.online}
         />
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-zinc-100">
+        <p className="truncate text-sm font-medium text-zinc-950">
           {user.displayName}
         </p>
         <p className="mt-1 truncate text-sm text-zinc-500">{user.email}</p>

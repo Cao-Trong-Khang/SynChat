@@ -120,7 +120,7 @@ export function MessageComposer({
   return (
     <form className="flex items-end gap-3" onSubmit={handleSubmit}>
       <textarea
-        className="max-h-32 min-h-11 flex-1 resize-none rounded-md border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-2 focus:ring-zinc-800"
+        className="max-h-32 min-h-11 flex-1 resize-none rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
         disabled={isSending}
         onBlur={handleBlur}
         onChange={handleChange}

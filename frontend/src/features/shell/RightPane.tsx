@@ -8,7 +8,7 @@ export function RightPane() {
 
   if (selectedChat.kind === 'conversation') {
     return (
-      <section className="min-w-0 flex-1 bg-zinc-950">
+      <section className="min-w-0 flex-1 bg-zinc-50">
         <ChatDetail conversationLocalId={selectedChat.conversationLocalId} />
       </section>
     )
@@ -16,14 +16,14 @@ export function RightPane() {
 
   if (selectedChat.kind === 'draft') {
     return (
-      <section className="min-w-0 flex-1 bg-zinc-950">
+      <section className="min-w-0 flex-1 bg-zinc-50">
         <ChatDetail peerUserId={selectedChat.peerUserId} />
       </section>
     )
   }
 
   return (
-    <section className="min-w-0 flex-1 bg-zinc-950">
+    <section className="min-w-0 flex-1 bg-zinc-50">
       <LandingView />
     </section>
   )

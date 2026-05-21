@@ -25,14 +25,14 @@ export function LeftPane() {
   }
 
   return (
-    <aside className="flex h-svh w-[360px] shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
+    <aside className="flex h-svh w-[360px] shrink-0 flex-col border-r border-zinc-200 bg-white">
       <LeftHeader />
       <div className="flex min-h-0 flex-1 flex-col">
         {searchMode ? <UserSearchResultList /> : <ConversationList />}
       </div>
-      <footer className="shrink-0 border-t border-zinc-800 p-3">
+      <footer className="shrink-0 border-t border-zinc-200 p-3">
         <Button
-          className="h-10 w-full justify-start gap-2 bg-transparent px-3 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-zinc-600"
+          className="h-10 w-full justify-start gap-2 bg-transparent px-3 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-zinc-400"
           disabled={isLoggingOut}
           onClick={() => void handleLogout()}
         >

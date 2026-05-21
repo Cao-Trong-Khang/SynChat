@@ -28,14 +28,14 @@ export function ChatShell() {
 
   if (isOpeningDb) {
     return (
-      <div className="flex h-svh w-full items-center justify-center bg-zinc-950 text-sm font-medium text-zinc-400">
+      <div className="flex h-svh w-full items-center justify-center bg-white text-sm font-medium text-zinc-500">
         Opening local database...
       </div>
     )
   }
 
   return (
-    <div className="flex h-svh w-full overflow-hidden bg-zinc-950 text-zinc-50">
+    <div className="flex h-svh w-full overflow-hidden bg-white text-zinc-950">
       <LeftPane />
       <RightPane />
     </div>

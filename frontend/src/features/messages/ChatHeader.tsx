@@ -31,21 +31,21 @@ export function ChatHeader({ peerUser }: ChatHeaderProps) {
   }, [peerUser])
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-800 px-5">
+    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-200 bg-white px-5">
       <div className="relative shrink-0">
         <Avatar
-          className="bg-zinc-800 text-zinc-100"
+          className="bg-blue-100 text-blue-700"
           name={displayName}
           src={peerUser?.avatarUrl ?? undefined}
         />
         <OnlineStatus
-          className="absolute bottom-0 right-0 size-3 border-2 border-zinc-950"
+          className="absolute bottom-0 right-0 size-3 border-2 border-white"
           online={presence?.online}
         />
       </div>
 
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-zinc-100">
+        <p className="truncate text-sm font-medium text-zinc-950">
           {displayName}
         </p>
         <p className="truncate text-xs text-zinc-500">

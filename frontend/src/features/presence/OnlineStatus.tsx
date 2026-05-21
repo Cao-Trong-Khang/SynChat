@@ -11,7 +11,7 @@ export function OnlineStatus({ className, online = false }: OnlineStatusProps) {
       aria-label={online ? 'Online' : 'Offline'}
       className={clsx(
         'inline-block rounded-full',
-        online ? 'bg-emerald-500' : 'bg-zinc-600',
+        online ? 'bg-emerald-500' : 'bg-zinc-300',
         className,
       )}
     />

@@ -152,7 +152,7 @@ function ChatDetailContent({
   serverConversationId?: null | string
 }) {
   return (
-    <div className="flex h-full min-w-0 flex-1 flex-col bg-zinc-950">
+    <div className="flex h-full min-w-0 flex-1 flex-col bg-zinc-50">
       <ChatHeader peerUser={peerUser} />
 
       <MessageList
@@ -166,7 +166,7 @@ function ChatDetailContent({
         peerUser={peerUser}
       />
 
-      <footer className="border-t border-zinc-800 px-5 py-4">
+      <footer className="border-t border-zinc-200 bg-white px-5 py-4">
         <TypingIndicator conversationId={serverConversationId} />
         <MessageComposer
           composerKey={composerKey}

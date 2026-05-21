@@ -19,7 +19,7 @@ export function AppBootstrap() {
 
   if (isBootstrapping) {
     return (
-      <main className="flex min-h-svh items-center justify-center bg-zinc-950 text-sm font-medium text-zinc-200">
+      <main className="flex min-h-svh items-center justify-center bg-white text-sm font-medium text-zinc-700">
         Loading SynChat...
       </main>
     )

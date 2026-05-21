@@ -37,7 +37,7 @@ export function MessageStatusView({
       <div className="mt-1 flex justify-end gap-2 pr-1 text-xs">
         <span className="text-red-400">{status.label}</span>
         <button
-          className="font-medium text-zinc-300 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
+          className="font-medium text-zinc-700 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400"
           onClick={() => void messageService.retryMessage(message.localId)}
           type="button"
         >
@@ -52,7 +52,7 @@ export function MessageStatusView({
       <div className="mt-1 flex justify-end pr-1">
         <Avatar
           alt={status.label}
-          className="size-4 bg-zinc-800 text-[8px] text-zinc-100"
+          className="size-4 bg-blue-100 text-[8px] text-blue-700"
           name={peerUser?.displayName ?? 'Read'}
           src={peerUser?.avatarUrl ?? undefined}
         />

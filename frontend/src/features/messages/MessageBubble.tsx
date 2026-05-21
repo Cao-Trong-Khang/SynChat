@@ -37,7 +37,7 @@ export function MessageBubble({
         <div className="w-8 shrink-0">
           {showAvatar ? (
             <Avatar
-              className="size-8 bg-zinc-800 text-xs text-zinc-100"
+              className="size-8 bg-blue-100 text-xs text-blue-700"
               name={peerUser?.displayName ?? 'Unknown user'}
               src={peerUser?.avatarUrl ?? undefined}
             />
@@ -50,9 +50,9 @@ export function MessageBubble({
           className={
             isMine
               ? message.localStatus === 'failed'
-                ? 'rounded-2xl rounded-br-md bg-red-950/70 px-4 py-2 text-sm leading-6 text-red-100'
-                : 'rounded-2xl rounded-br-md bg-zinc-100 px-4 py-2 text-sm leading-6 text-zinc-950'
-              : 'rounded-2xl rounded-bl-md bg-zinc-900 px-4 py-2 text-sm leading-6 text-zinc-100'
+                ? 'rounded-2xl rounded-br-md bg-red-50 px-4 py-2 text-sm leading-6 text-red-700 ring-1 ring-red-200'
+                : 'rounded-2xl rounded-br-md bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-950 ring-1 ring-blue-100'
+              : 'rounded-2xl rounded-bl-md bg-white px-4 py-2 text-sm leading-6 text-zinc-950 ring-1 ring-zinc-200'
           }
         >
           {message.body}

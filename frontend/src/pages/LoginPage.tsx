@@ -6,7 +6,7 @@ export function LoginPage() {
   return (
     <section className="w-full max-w-sm space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-semibold text-zinc-950">SynChat Web</h1>
+        <h1 className="text-3xl font-semibold text-zinc-950">SynChat</h1>
         <p className="text-sm text-zinc-500">Sign in to continue</p>
       </div>
 
