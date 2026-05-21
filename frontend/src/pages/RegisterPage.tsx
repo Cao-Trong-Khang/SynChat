@@ -18,6 +18,9 @@ export function RegisterPage() {
           Sign in
         </Link>
       </p>
+      <p className="mt-6 text-center text-xs text-zinc-400">
+        © 2026 SynChat. Created by Cao Trong Khang.
+      </p>
     </section>
   )
 }
