@@ -77,6 +77,28 @@ function formatLastSeen(lastSeenAt: string) {
     return lastSeenAt
   }
 
+  const diffMs = date.getTime() - Date.now()
+  const absDiffMs = Math.abs(diffMs)
+  const relativeTime = new Intl.RelativeTimeFormat(undefined, {
+    numeric: 'auto',
+  })
+
+  if (absDiffMs < 60_000) {
+    return 'just now'
+  }
+
+  if (absDiffMs < 60 * 60_000) {
+    return relativeTime.format(Math.round(diffMs / 60_000), 'minute')
+  }
+
+  if (absDiffMs < 24 * 60 * 60_000) {
+    return relativeTime.format(Math.round(diffMs / (60 * 60_000)), 'hour')
+  }
+
+  if (absDiffMs < 7 * 24 * 60 * 60_000) {
+    return relativeTime.format(Math.round(diffMs / (24 * 60 * 60_000)), 'day')
+  }
+
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
