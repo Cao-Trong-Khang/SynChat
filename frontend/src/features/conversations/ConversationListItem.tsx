@@ -2,6 +2,8 @@ import { clsx } from 'clsx'
 
 import { observeUser } from '@/db/repositories/usersRepo'
 import { useAuthStore } from '@/features/auth/authStore'
+import { OnlineStatus } from '@/features/presence/OnlineStatus'
+import { usePresenceStore } from '@/features/presence/presenceStore'
 import { useShellStore } from '@/features/shell/shellStore'
 import { Avatar } from '@/shared/components/Avatar'
 
@@ -20,6 +22,9 @@ export function ConversationListItem({ conversation }: ConversationListItemProps
   const currentUser = useAuthStore((state) => state.currentUser)
   const selectedChat = useShellStore((state) => state.selectedChat)
   const selectConversation = useShellStore((state) => state.selectConversation)
+  const presence = usePresenceStore(
+    (state) => state.byUserId[conversation.peerUserId],
+  )
   const peerUser = observeUser(conversation.peerUserId)
   const isSelected =
     selectedChat.kind === 'conversation' &&
@@ -43,7 +48,10 @@ export function ConversationListItem({ conversation }: ConversationListItemProps
           name={title}
           src={peerUser?.avatarUrl ?? undefined}
         />
-        <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-zinc-950 bg-zinc-600" />
+        <OnlineStatus
+          className="absolute bottom-0 right-0 size-3 border-2 border-zinc-950"
+          online={presence?.online}
+        />
       </div>
 
       <div className="min-w-0 flex-1">

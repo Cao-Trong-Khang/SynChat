@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { getErrorMessage } from '@/shared/api/apiError'
+import { presenceService } from '@/features/presence/presenceService'
 import { useShellStore } from '@/features/shell/shellStore'
 
 import { userApi } from './userApi'
@@ -27,6 +28,16 @@ export function UserSearchResultList({ keyword }: UserSearchResultListProps) {
   useEffect(() => {
     if (searchQuery.data) {
       void cacheUserSearchResults(searchQuery.data)
+    }
+  }, [searchQuery.data])
+
+  useEffect(() => {
+    const userIds = searchQuery.data?.map((user) => user.id) ?? []
+
+    presenceService.subscribe(userIds)
+
+    return () => {
+      presenceService.unsubscribe(userIds)
     }
   }, [searchQuery.data])
 

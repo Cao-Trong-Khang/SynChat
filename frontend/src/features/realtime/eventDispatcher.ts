@@ -1,4 +1,5 @@
 import { getNumber as getSyncStateNumber } from '@/db/repositories/syncStateRepo'
+import { usePresenceStore } from '@/features/presence/presenceStore'
 import { eventApplier } from '@/features/sync/eventApplier'
 import { eventSync } from '@/features/sync/eventSync'
 import type {
@@ -20,8 +21,75 @@ export const eventDispatcher = {
       return
     }
 
+    if (envelope.type === 'presence.snapshot') {
+      applyPresenceSnapshot(envelope.payload)
+      return
+    }
+
+    if (envelope.type === 'presence.changed') {
+      applyPresenceChanged(envelope.payload)
+      return
+    }
+
     console.log('SynChat realtime event:', envelope)
   },
+}
+
+function applyPresenceSnapshot(payload: unknown) {
+  const items = (payload as { items?: unknown }).items
+
+  if (!Array.isArray(items)) {
+    return
+  }
+
+  usePresenceStore.getState().setSnapshot(
+    items
+      .map((item) => {
+        const candidate = item as {
+          lastSeenAt?: null | string
+          online?: boolean
+          userId?: string
+        }
+
+        if (
+          typeof candidate.userId !== 'string' ||
+          typeof candidate.online !== 'boolean'
+        ) {
+          return null
+        }
+
+        return {
+          lastSeenAt:
+            typeof candidate.lastSeenAt === 'string'
+              ? candidate.lastSeenAt
+              : null,
+          online: candidate.online,
+          userId: candidate.userId,
+        }
+      })
+      .filter((item) => item !== null),
+  )
+}
+
+function applyPresenceChanged(payload: unknown) {
+  const candidate = payload as {
+    lastSeenAt?: null | string
+    online?: boolean
+    userId?: string
+  }
+
+  if (
+    typeof candidate.userId !== 'string' ||
+    typeof candidate.online !== 'boolean'
+  ) {
+    return
+  }
+
+  usePresenceStore.getState().setPresence(
+    candidate.userId,
+    candidate.online,
+    typeof candidate.lastSeenAt === 'string' ? candidate.lastSeenAt : null,
+  )
 }
 
 async function dispatchPersistedEvent(envelope: SyncPersistedEventEnvelope) {

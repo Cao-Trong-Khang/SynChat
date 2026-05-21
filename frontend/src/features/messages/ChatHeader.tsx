@@ -1,4 +1,9 @@
+import { useEffect } from 'react'
+
 import type { LocalUser } from '@/db/models'
+import { OnlineStatus } from '@/features/presence/OnlineStatus'
+import { presenceService } from '@/features/presence/presenceService'
+import { usePresenceStore } from '@/features/presence/presenceStore'
 import { Avatar } from '@/shared/components/Avatar'
 
 type ChatHeaderProps = {
@@ -8,6 +13,22 @@ type ChatHeaderProps = {
 export function ChatHeader({ peerUser }: ChatHeaderProps) {
   const displayName = peerUser?.displayName ?? 'Unknown user'
   const email = peerUser?.email ?? ''
+  const presence = usePresenceStore((state) =>
+    peerUser ? state.byUserId[peerUser.id] : undefined,
+  )
+  const presenceText = getPresenceText(presence)
+
+  useEffect(() => {
+    if (!peerUser) {
+      return
+    }
+
+    presenceService.subscribe([peerUser.id])
+
+    return () => {
+      presenceService.unsubscribe([peerUser.id])
+    }
+  }, [peerUser])
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-800 px-5">
@@ -17,7 +38,10 @@ export function ChatHeader({ peerUser }: ChatHeaderProps) {
           name={displayName}
           src={peerUser?.avatarUrl ?? undefined}
         />
-        <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-zinc-950 bg-zinc-600" />
+        <OnlineStatus
+          className="absolute bottom-0 right-0 size-3 border-2 border-zinc-950"
+          online={presence?.online}
+        />
       </div>
 
       <div className="min-w-0">
@@ -25,9 +49,36 @@ export function ChatHeader({ peerUser }: ChatHeaderProps) {
           {displayName}
         </p>
         <p className="truncate text-xs text-zinc-500">
-          {email ? `${email} · Offline` : 'Offline'}
+          {email ? `${email} · ${presenceText}` : presenceText}
         </p>
       </div>
     </header>
   )
+}
+
+function getPresenceText(
+  presence: { lastSeenAt: null | string; online: boolean } | undefined,
+) {
+  if (presence?.online) {
+    return 'now'
+  }
+
+  if (presence?.lastSeenAt) {
+    return `Last seen ${formatLastSeen(presence.lastSeenAt)}`
+  }
+
+  return 'Offline'
+}
+
+function formatLastSeen(lastSeenAt: string) {
+  const date = new Date(lastSeenAt)
+
+  if (Number.isNaN(date.getTime())) {
+    return lastSeenAt
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
 }

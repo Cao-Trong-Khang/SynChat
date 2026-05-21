@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+import { OnlineStatus } from '@/features/presence/OnlineStatus'
+import { usePresenceStore } from '@/features/presence/presenceStore'
 import { Avatar } from '@/shared/components/Avatar'
 
 import { openUserSearchResult } from './userSearchService'
@@ -11,6 +13,7 @@ type UserSearchResultItemProps = {
 
 export function UserSearchResultItem({ user }: UserSearchResultItemProps) {
   const [isOpening, setIsOpening] = useState(false)
+  const presence = usePresenceStore((state) => state.byUserId[user.id])
 
   async function handleOpenUser() {
     if (isOpening) {
@@ -39,7 +42,10 @@ export function UserSearchResultItem({ user }: UserSearchResultItemProps) {
           name={user.displayName}
           src={user.avatarUrl ?? undefined}
         />
-        <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-zinc-950 bg-zinc-600" />
+        <OnlineStatus
+          className="absolute bottom-0 right-0 size-3 border-2 border-zinc-950"
+          online={presence?.online}
+        />
       </div>
 
       <div className="min-w-0 flex-1">

@@ -1,4 +1,6 @@
-import { useRef, type UIEvent } from 'react'
+import { useEffect, useMemo, useRef, type UIEvent } from 'react'
+
+import { presenceService } from '@/features/presence/presenceService'
 
 import { ConversationEmptyState } from './ConversationEmptyState'
 import { ConversationListItem } from './ConversationListItem'
@@ -8,6 +10,19 @@ export function ConversationList() {
   const { conversations, loadingMore, loadMoreConversations } =
     useConversationList()
   const isLoadingMoreRef = useRef(false)
+  const peerUserIds = useMemo(
+    () => conversations?.map((conversation) => conversation.peerUserId) ?? [],
+    [conversations],
+  )
+  const peerUserIdsKey = peerUserIds.join('\n')
+
+  useEffect(() => {
+    presenceService.subscribe(peerUserIds)
+
+    return () => {
+      presenceService.unsubscribe(peerUserIds)
+    }
+  }, [peerUserIds, peerUserIdsKey])
 
   async function handleScroll(event: UIEvent<HTMLElement>) {
     const container = event.currentTarget
