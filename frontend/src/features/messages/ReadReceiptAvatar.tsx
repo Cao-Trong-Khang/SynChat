@@ -15,7 +15,7 @@ export function ReadReceiptAvatar({ alt, peerUser }: ReadReceiptAvatarProps) {
     .join('')
 
   return (
-    <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-[6px] font-medium leading-none text-blue-700">
+    <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-[6px] font-medium leading-none text-[#005ae0]">
       {peerUser?.avatarUrl ? (
         <img
           alt={alt}

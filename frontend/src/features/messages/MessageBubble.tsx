@@ -37,7 +37,7 @@ export function MessageBubble({
         <div className="w-8 shrink-0">
           {showAvatar ? (
             <Avatar
-              className="size-8 bg-blue-100 text-xs text-blue-700"
+              className="size-8 bg-blue-100 text-xs text-[#005ae0]"
               name={peerUser?.displayName ?? 'Unknown user'}
               src={peerUser?.avatarUrl ?? undefined}
             />

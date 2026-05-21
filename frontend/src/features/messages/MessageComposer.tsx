@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ChangeEvent, type FormEvent } from 'react'
 import { SendHorizonal } from 'lucide-react'
 
-import { Button } from '@/shared/components/Button'
 import { typingService } from '@/features/typing/typingService'
 
 import { useComposerDraftStore } from './composerDraftStore'
@@ -137,14 +136,14 @@ export function MessageComposer({
         rows={1}
         value={body}
       />
-      <Button
+      <button
         aria-label="Send message"
-        className="size-11 shrink-0 px-0"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-[#005ae0] transition-colors hover:bg-blue-50 hover:text-[#004bb8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005ae0] disabled:cursor-not-allowed disabled:text-zinc-300 disabled:hover:bg-transparent"
         disabled={!trimmedBody || isSending}
         type="submit"
       >
-        <SendHorizonal aria-hidden="true" className="size-4" />
-      </Button>
+        <SendHorizonal aria-hidden="true" className="size-5" />
+      </button>
     </form>
   )
 }

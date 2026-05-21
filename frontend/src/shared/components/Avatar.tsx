@@ -18,7 +18,7 @@ export function Avatar({ alt, className, name = 'SynChat', src }: AvatarProps) {
   return (
     <div
       className={clsx(
-        'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-medium text-blue-700',
+        'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-medium text-[#005ae0]',
         className,
       )}
     >

@@ -38,7 +38,7 @@ export function UserSearchResultItem({ user }: UserSearchResultItemProps) {
     >
       <div className="relative shrink-0">
         <Avatar
-          className="bg-blue-100 text-blue-700"
+          className="bg-blue-100 text-[#005ae0]"
           name={user.displayName}
           src={user.avatarUrl ?? undefined}
         />
