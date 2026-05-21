@@ -9,7 +9,7 @@ import type { FirebaseNotificationConfig } from './notificationTypes'
 
 let messagingInstance: Messaging | null | undefined
 
-function readFirebaseConfig(): FirebaseNotificationConfig | null {
+export function readFirebaseConfig(): FirebaseNotificationConfig | null {
   const config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
@@ -24,6 +24,19 @@ function readFirebaseConfig(): FirebaseNotificationConfig | null {
   }
 
   return config
+}
+
+export function getMissingFirebaseConfigKeys() {
+  const keys = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    'VITE_FIREBASE_APP_ID',
+    'VITE_FIREBASE_VAPID_KEY',
+  ] as const
+
+  return keys.filter((key) => !import.meta.env[key])
 }
 
 function getFirebaseApp(config: FirebaseNotificationConfig): FirebaseApp {
@@ -46,6 +59,9 @@ export async function getMessagingInstance() {
   const config = readFirebaseConfig()
 
   if (!config) {
+    console.warn(
+      `Firebase Messaging is not configured. Missing env: ${getMissingFirebaseConfigKeys().join(', ')}`,
+    )
     messagingInstance = null
     return null
   }

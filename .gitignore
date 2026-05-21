@@ -36,3 +36,6 @@ build/
 
 _.sqlite
 _.db
+
+**/*firebase-adminsdk*.json
+**/secrets/*.json

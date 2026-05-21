@@ -2,6 +2,8 @@ import { clearLocalDatabase } from '@/db/db'
 import { getOrCreateDeviceId } from '@/features/device/deviceId'
 import { deviceStateService } from '@/features/device/deviceStateService'
 import { useComposerDraftStore } from '@/features/messages/composerDraftStore'
+import { notificationService } from '@/features/notifications/notificationService'
+import { useNotificationStore } from '@/features/notifications/notificationStore'
 import { usePresenceStore } from '@/features/presence/presenceStore'
 import { presenceService } from '@/features/presence/presenceService'
 import { useWebSocketStore } from '@/features/realtime/websocketStore'
@@ -112,6 +114,7 @@ export const authService = {
 
     websocketStore.setShuttingDownRealtime(true)
 
+    notificationService.clearBackendRegistrationForLogout()
     presenceService.unsubscribeAllForLogout()
     typingService.unsubscribeAllForLogout()
     deviceStateService.markBackground()
@@ -136,6 +139,8 @@ export const authService = {
     useTypingStore.getState().clearAll()
     useComposerDraftStore.getState().clearAll()
     useSyncStore.getState().reset()
+    useNotificationStore.getState().reset()
+    notificationService.resetRuntime()
 
     try {
       await clearLocalDatabase()

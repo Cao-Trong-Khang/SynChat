@@ -3,7 +3,10 @@ import { useEffect } from 'react'
 import { authService } from '@/features/auth/authService'
 import { useAuthStore } from '@/features/auth/authStore'
 import { getOrCreateDeviceId } from '@/features/device/deviceId'
+import { notificationService } from '@/features/notifications/notificationService'
+import { useNotificationStore } from '@/features/notifications/notificationStore'
 import { websocketManager } from '@/features/realtime/websocketManager'
+import { useWebSocketStore } from '@/features/realtime/websocketStore'
 import { firstOpenSync } from '@/features/sync/firstOpenSync'
 
 const syncedUserIds = new Set<string>()
@@ -13,6 +16,8 @@ export function AuthenticatedAppEffects() {
   const currentUser = useAuthStore((state) => state.currentUser)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const sessionId = useAuthStore((state) => state.sessionId)
+  const notificationToken = useNotificationStore((state) => state.token)
+  const websocketConnected = useWebSocketStore((state) => state.connected)
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -62,6 +67,22 @@ export function AuthenticatedAppEffects() {
       websocketManager.close()
     }
   }, [currentUser, isAuthenticated, sessionId])
+
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser) {
+      return
+    }
+
+    void notificationService.initializeAfterLogin(sessionId)
+  }, [currentUser, isAuthenticated, sessionId])
+
+  useEffect(() => {
+    if (!isAuthenticated || !websocketConnected || !notificationToken) {
+      return
+    }
+
+    void notificationService.registerStoredTokenWithBackend()
+  }, [isAuthenticated, notificationToken, websocketConnected])
 
   return null
 }
