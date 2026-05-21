@@ -109,6 +109,8 @@ function ExistingConversationDetail({
       isLoadingLatest={isLoadingLatest}
       loadOlder={loadOlder}
       loadingOlder={loadingOlder}
+      peerDeliveredSeq={conversation?.peerDeliveredSeq ?? 0}
+      peerReadSeq={conversation?.peerReadSeq ?? 0}
       peerUser={peerUser}
       serverConversationId={serverConversationId}
     />
@@ -133,6 +135,8 @@ function ChatDetailContent({
   isLoadingLatest,
   loadOlder,
   loadingOlder,
+  peerDeliveredSeq,
+  peerReadSeq,
   peerUser,
   serverConversationId,
 }: {
@@ -142,6 +146,8 @@ function ChatDetailContent({
   isLoadingLatest?: boolean
   loadOlder?: () => Promise<boolean>
   loadingOlder?: boolean
+  peerDeliveredSeq?: number
+  peerReadSeq?: number
   peerUser: ReturnType<typeof observeUser>
   serverConversationId?: null | string
 }) {
@@ -155,6 +161,8 @@ function ChatDetailContent({
         isLoadingLatest={isLoadingLatest}
         loadOlder={loadOlder}
         loadingOlder={loadingOlder}
+        peerDeliveredSeq={peerDeliveredSeq}
+        peerReadSeq={peerReadSeq}
         peerUser={peerUser}
       />
 

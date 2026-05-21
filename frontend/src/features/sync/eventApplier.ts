@@ -1,5 +1,11 @@
 import { db } from '@/db/db'
-import { getByServerId, upsertConversation } from '@/db/repositories/conversationsRepo'
+import {
+  getByServerId,
+  updateConversationUnreadCount,
+  updatePeerDeliveredSeqIfNewer,
+  updatePeerReadSeqIfNewer,
+  upsertConversation,
+} from '@/db/repositories/conversationsRepo'
 import { expandRangeForMessageSeq } from '@/db/repositories/messageSyncStateRepo'
 import { upsertServerMessage } from '@/db/repositories/messagesRepo'
 import {
@@ -16,6 +22,8 @@ import { useShellStore } from '@/features/shell/shellStore'
 
 import type {
   MessageCreatedEventEnvelope,
+  MessageDeliveredEventEnvelope,
+  MessageReadEventEnvelope,
   PersistedEventEnvelope,
 } from './syncTypes'
 
@@ -35,12 +43,15 @@ export const eventApplier = {
       return
     }
 
-    if (
-      envelope.eventType === 'message.delivered' ||
-      envelope.eventType === 'message.read'
-    ) {
-      // Phase 5: apply delivered/read receipts.
-      await setSyncState('last_handled_event_seq', String(envelope.eventSeq))
+    if (envelope.eventType === 'message.delivered') {
+      await this.applyMessageDelivered(
+        envelope as MessageDeliveredEventEnvelope,
+      )
+      return
+    }
+
+    if (envelope.eventType === 'message.read') {
+      await this.applyMessageRead(envelope as MessageReadEventEnvelope)
       return
     }
 
@@ -129,5 +140,43 @@ export const eventApplier = {
         envelope.payload.message.seq,
       )
     }
+  },
+
+  async applyMessageDelivered(envelope: MessageDeliveredEventEnvelope) {
+    await db.transaction('rw', [db.conversations, db.syncState], async () => {
+      const conversation = await getByServerId(envelope.payload.conversationId)
+
+      if (conversation) {
+        if (envelope.payload.userId === conversation.peerUserId) {
+          await updatePeerDeliveredSeqIfNewer(
+            conversation.localId,
+            envelope.payload.deliveredSeq,
+          )
+        }
+      }
+
+      await setSyncState('last_handled_event_seq', String(envelope.eventSeq))
+    })
+  },
+
+  async applyMessageRead(envelope: MessageReadEventEnvelope) {
+    await db.transaction('rw', [db.conversations, db.syncState], async () => {
+      const conversation = await getByServerId(envelope.payload.conversationId)
+
+      if (conversation) {
+        const currentUserId = useAuthStore.getState().currentUser?.id
+
+        if (envelope.payload.userId === conversation.peerUserId) {
+          await updatePeerReadSeqIfNewer(
+            conversation.localId,
+            envelope.payload.readSeq,
+          )
+        } else if (envelope.payload.userId === currentUserId) {
+          await updateConversationUnreadCount(conversation.localId, 0)
+        }
+      }
+
+      await setSyncState('last_handled_event_seq', String(envelope.eventSeq))
+    })
   },
 }

@@ -14,6 +14,8 @@ type MessageListProps = {
   isLoadingLatest?: boolean
   loadOlder?: () => Promise<boolean>
   loadingOlder?: boolean
+  peerDeliveredSeq?: number
+  peerReadSeq?: number
   peerUser: LocalUser | undefined
 }
 
@@ -29,6 +31,8 @@ export function MessageList({
   isLoadingLatest = false,
   loadOlder,
   loadingOlder = false,
+  peerDeliveredSeq = 0,
+  peerReadSeq = 0,
   peerUser,
 }: MessageListProps) {
   const currentUser = useAuthStore((state) => state.currentUser)
@@ -195,6 +199,8 @@ export function MessageList({
               group={item.group}
               key={item.id}
               lastOwnMessageLocalId={lastOwnMessageLocalId}
+              peerDeliveredSeq={peerDeliveredSeq}
+              peerReadSeq={peerReadSeq}
               peerUser={peerUser}
             />
           ),

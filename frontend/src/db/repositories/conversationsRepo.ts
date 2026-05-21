@@ -24,6 +24,32 @@ export async function updateConversationUnreadCount(
   await db.conversations.update(localId, { unreadCount })
 }
 
+export async function updatePeerDeliveredSeqIfNewer(
+  localId: string,
+  deliveredSeq: number,
+) {
+  const conversation = await getByLocalId(localId)
+
+  if (!conversation || conversation.peerDeliveredSeq >= deliveredSeq) {
+    return
+  }
+
+  await db.conversations.update(localId, { peerDeliveredSeq: deliveredSeq })
+}
+
+export async function updatePeerReadSeqIfNewer(
+  localId: string,
+  readSeq: number,
+) {
+  const conversation = await getByLocalId(localId)
+
+  if (!conversation || conversation.peerReadSeq >= readSeq) {
+    return
+  }
+
+  await db.conversations.update(localId, { peerReadSeq: readSeq })
+}
+
 export function getByLocalId(localId: string) {
   return db.conversations.get(localId)
 }

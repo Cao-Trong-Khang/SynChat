@@ -37,6 +37,32 @@ export type MessageCreatedEventEnvelope = {
   type: 'event'
 }
 
+export type MessageDeliveredEventPayload = {
+  conversationId: string
+  deliveredSeq: number
+  userId: string
+}
+
+export type MessageDeliveredEventEnvelope = {
+  eventSeq: number
+  eventType: 'message.delivered'
+  payload: MessageDeliveredEventPayload
+  type: 'event'
+}
+
+export type MessageReadEventPayload = {
+  conversationId: string
+  readSeq: number
+  userId: string
+}
+
+export type MessageReadEventEnvelope = {
+  eventSeq: number
+  eventType: 'message.read'
+  payload: MessageReadEventPayload
+  type: 'event'
+}
+
 export type PersistedEventEnvelope = {
   eventSeq: number
   eventType: string

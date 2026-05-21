@@ -8,6 +8,8 @@ type MessageGroupProps = {
   currentUserId: string | undefined
   group: MessageGroupModel
   lastOwnMessageLocalId: string | undefined
+  peerDeliveredSeq: number
+  peerReadSeq: number
   peerUser: LocalUser | undefined
 }
 
@@ -15,6 +17,8 @@ export function MessageGroup({
   currentUserId,
   group,
   lastOwnMessageLocalId,
+  peerDeliveredSeq,
+  peerReadSeq,
   peerUser,
 }: MessageGroupProps) {
   const isMine = group.senderId === currentUserId
@@ -38,6 +42,9 @@ export function MessageGroup({
               <MessageStatusView
                 isLastOwnMessage={isLastOwnMessage}
                 message={message}
+                peerDeliveredSeq={peerDeliveredSeq}
+                peerReadSeq={peerReadSeq}
+                peerUser={peerUser}
               />
             ) : null}
           </div>
