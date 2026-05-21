@@ -163,7 +163,7 @@ export function MessageList({
   if (!conversationLocalId || messages.length === 0) {
     return (
       <div
-        className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 text-center"
+        className="scrollbar-hidden flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 text-center"
         ref={scrollRef}
       >
         <p className="text-sm text-zinc-500">
@@ -180,7 +180,7 @@ export function MessageList({
 
   return (
     <div
-      className="min-h-0 flex-1 overflow-y-auto px-5 py-4"
+      className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-5 py-4"
       onScroll={() => void handleScroll()}
       ref={scrollRef}
     >

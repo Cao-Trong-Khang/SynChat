@@ -65,7 +65,7 @@ export function ConversationList() {
 
   return (
     <section
-      className="min-h-0 flex-1 overflow-y-auto py-2"
+      className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto py-2"
       onScroll={(event) => void handleScroll(event)}
     >
       {conversations.map((conversation) => (
