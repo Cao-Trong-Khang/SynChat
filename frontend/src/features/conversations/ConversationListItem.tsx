@@ -70,7 +70,7 @@ export function ConversationListItem({ conversation }: ConversationListItemProps
             {preview}
           </p>
           {conversation.unreadCount > 0 ? (
-            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-1.5 text-xs font-semibold text-zinc-950">
+            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-semibold text-blue-700">
               {conversation.unreadCount}
             </span>
           ) : null}
