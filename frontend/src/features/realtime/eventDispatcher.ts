@@ -2,6 +2,7 @@ import { getNumber as getSyncStateNumber } from '@/db/repositories/syncStateRepo
 import { usePresenceStore } from '@/features/presence/presenceStore'
 import { eventApplier } from '@/features/sync/eventApplier'
 import { eventSync } from '@/features/sync/eventSync'
+import { useTypingStore } from '@/features/typing/typingStore'
 import type {
   PersistedEventEnvelope as SyncPersistedEventEnvelope,
 } from '@/features/sync/syncTypes'
@@ -28,6 +29,16 @@ export const eventDispatcher = {
 
     if (envelope.type === 'presence.changed') {
       applyPresenceChanged(envelope.payload)
+      return
+    }
+
+    if (envelope.type === 'typing.started') {
+      applyTypingStarted(envelope.payload)
+      return
+    }
+
+    if (envelope.type === 'typing.stopped') {
+      applyTypingStopped(envelope.payload)
       return
     }
 
@@ -90,6 +101,42 @@ function applyPresenceChanged(payload: unknown) {
     candidate.online,
     typeof candidate.lastSeenAt === 'string' ? candidate.lastSeenAt : null,
   )
+}
+
+function applyTypingStarted(payload: unknown) {
+  const candidate = payload as {
+    conversationId?: string
+    userId?: string
+  }
+
+  if (
+    typeof candidate.conversationId !== 'string' ||
+    typeof candidate.userId !== 'string'
+  ) {
+    return
+  }
+
+  useTypingStore
+    .getState()
+    .setTyping(candidate.conversationId, candidate.userId)
+}
+
+function applyTypingStopped(payload: unknown) {
+  const candidate = payload as {
+    conversationId?: string
+    userId?: string
+  }
+
+  if (
+    typeof candidate.conversationId !== 'string' ||
+    typeof candidate.userId !== 'string'
+  ) {
+    return
+  }
+
+  useTypingStore
+    .getState()
+    .clearTyping(candidate.conversationId, candidate.userId)
 }
 
 async function dispatchPersistedEvent(envelope: SyncPersistedEventEnvelope) {

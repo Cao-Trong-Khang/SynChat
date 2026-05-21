@@ -1,19 +1,110 @@
-import { type FormEvent } from 'react'
+import { useEffect, useRef, type ChangeEvent, type FormEvent } from 'react'
 import { SendHorizonal } from 'lucide-react'
 
 import { Button } from '@/shared/components/Button'
+import { typingService } from '@/features/typing/typingService'
 
 import { useComposerDraftStore } from './composerDraftStore'
 import { useSendMessage } from './useSendMessage'
 
-export function MessageComposer({ composerKey }: { composerKey: string }) {
+const TYPING_START_THROTTLE_MS = 2_000
+const TYPING_STOP_IDLE_MS = 1_000
+
+export function MessageComposer({
+  composerKey,
+  serverConversationId,
+}: {
+  composerKey: string
+  serverConversationId?: null | string
+}) {
   const body = useComposerDraftStore(
     (state) => state.drafts[composerKey] ?? '',
   )
   const clearDraft = useComposerDraftStore((state) => state.clearDraft)
   const setDraft = useComposerDraftStore((state) => state.setDraft)
   const { isSending, sendMessage } = useSendMessage()
+  const lastTypingStartAtRef = useRef(0)
+  const typingStopTimeoutRef = useRef<number | null>(null)
   const trimmedBody = body.trim()
+
+  function clearTypingStopTimeout() {
+    if (typingStopTimeoutRef.current === null) {
+      return
+    }
+
+    window.clearTimeout(typingStopTimeoutRef.current)
+    typingStopTimeoutRef.current = null
+  }
+
+  function scheduleTypingStop() {
+    if (!serverConversationId) {
+      return
+    }
+
+    clearTypingStopTimeout()
+
+    typingStopTimeoutRef.current = window.setTimeout(() => {
+      typingStopTimeoutRef.current = null
+      sendTypingStop()
+    }, TYPING_STOP_IDLE_MS)
+  }
+
+  function sendTypingStart() {
+    if (!serverConversationId) {
+      return
+    }
+
+    const now = Date.now()
+
+    if (now - lastTypingStartAtRef.current < TYPING_START_THROTTLE_MS) {
+      return
+    }
+
+    lastTypingStartAtRef.current = now
+    typingService.start(serverConversationId)
+  }
+
+  function sendTypingStop() {
+    if (!serverConversationId) {
+      return
+    }
+
+    clearTypingStopTimeout()
+    lastTypingStartAtRef.current = 0
+    typingService.stop(serverConversationId)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (typingStopTimeoutRef.current !== null) {
+        window.clearTimeout(typingStopTimeoutRef.current)
+        typingStopTimeoutRef.current = null
+      }
+
+      lastTypingStartAtRef.current = 0
+
+      if (serverConversationId) {
+        typingService.stop(serverConversationId)
+      }
+    }
+  }, [serverConversationId])
+
+  function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    const nextBody = event.target.value
+
+    setDraft(composerKey, nextBody)
+
+    if (nextBody.trim()) {
+      sendTypingStart()
+      scheduleTypingStop()
+    } else {
+      sendTypingStop()
+    }
+  }
+
+  function handleBlur() {
+    sendTypingStop()
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -22,6 +113,7 @@ export function MessageComposer({ composerKey }: { composerKey: string }) {
 
     if (didInsert) {
       clearDraft(composerKey)
+      sendTypingStop()
     }
   }
 
@@ -30,7 +122,8 @@ export function MessageComposer({ composerKey }: { composerKey: string }) {
       <textarea
         className="max-h-32 min-h-11 flex-1 resize-none rounded-md border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-2 focus:ring-zinc-800"
         disabled={isSending}
-        onChange={(event) => setDraft(composerKey, event.target.value)}
+        onBlur={handleBlur}
+        onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault()

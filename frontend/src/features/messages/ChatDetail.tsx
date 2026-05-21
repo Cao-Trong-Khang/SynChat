@@ -1,5 +1,10 @@
+import { useEffect } from 'react'
+
 import { observeConversation } from '@/db/repositories/conversationsRepo'
 import { observeUser } from '@/db/repositories/usersRepo'
+import { typingService } from '@/features/typing/typingService'
+import { useTypingStore } from '@/features/typing/typingStore'
+import { TypingIndicator } from '@/features/typing/TypingIndicator'
 
 import { ChatHeader } from './ChatHeader'
 import { MessageComposer } from './MessageComposer'
@@ -40,6 +45,20 @@ function ExistingConversationDetail({
       conversationLocalId,
       conversation?.serverId,
     )
+  const serverConversationId = conversation?.serverId ?? null
+
+  useEffect(() => {
+    if (!serverConversationId) {
+      return
+    }
+
+    typingService.subscribe(serverConversationId)
+
+    return () => {
+      typingService.unsubscribe(serverConversationId)
+      useTypingStore.getState().clearConversation(serverConversationId)
+    }
+  }, [serverConversationId])
 
   return (
     <ChatDetailContent
@@ -50,6 +69,7 @@ function ExistingConversationDetail({
       loadOlder={loadOlder}
       loadingOlder={loadingOlder}
       peerUser={peerUser}
+      serverConversationId={serverConversationId}
     />
   )
 }
@@ -73,6 +93,7 @@ function ChatDetailContent({
   loadOlder,
   loadingOlder,
   peerUser,
+  serverConversationId,
 }: {
   composerKey: string
   conversationLocalId?: string
@@ -81,6 +102,7 @@ function ChatDetailContent({
   loadOlder?: () => Promise<boolean>
   loadingOlder?: boolean
   peerUser: ReturnType<typeof observeUser>
+  serverConversationId?: null | string
 }) {
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-zinc-950">
@@ -96,7 +118,11 @@ function ChatDetailContent({
       />
 
       <footer className="border-t border-zinc-800 px-5 py-4">
-        <MessageComposer composerKey={composerKey} />
+        <TypingIndicator conversationId={serverConversationId} />
+        <MessageComposer
+          composerKey={composerKey}
+          serverConversationId={serverConversationId}
+        />
       </footer>
     </div>
   )
