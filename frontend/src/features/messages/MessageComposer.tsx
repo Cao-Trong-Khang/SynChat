@@ -138,7 +138,7 @@ export function MessageComposer({
       />
       <button
         aria-label="Send message"
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-[#005ae0] transition-colors hover:bg-blue-50 hover:text-[#004bb8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005ae0] disabled:cursor-not-allowed disabled:text-zinc-300 disabled:hover:bg-transparent"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-[#0a66c2] transition-colors hover:bg-blue-50 hover:text-[#084f96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a66c2] disabled:cursor-not-allowed disabled:text-zinc-300 disabled:hover:bg-transparent"
         disabled={!trimmedBody || isSending}
         type="submit"
       >

@@ -34,7 +34,7 @@ export function ChatHeader({ peerUser }: ChatHeaderProps) {
     <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-200 bg-white px-5">
       <div className="relative shrink-0">
         <Avatar
-          className="bg-blue-100 text-[#005ae0]"
+          className="bg-blue-100 text-[#0a66c2]"
           name={displayName}
           src={peerUser?.avatarUrl ?? undefined}
         />

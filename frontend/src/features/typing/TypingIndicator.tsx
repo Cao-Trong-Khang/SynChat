@@ -42,7 +42,7 @@ export function TypingIndicator({
   return (
     <div className="px-5 pb-2 text-left text-xs text-zinc-500">
       <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-2.5 py-1">
-        <span className="flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-[8px] font-medium leading-none text-[#005ae0]">
+        <span className="flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-[8px] font-medium leading-none text-[#0a66c2]">
           {peerUser?.avatarUrl ? (
             <img
               alt={displayName}

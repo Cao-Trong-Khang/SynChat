@@ -9,7 +9,7 @@ export function LeftHeader() {
   return (
     <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-200 px-4">
       <Avatar
-        className="bg-blue-100 text-[#005ae0]"
+        className="bg-blue-100 text-[#0a66c2]"
         name={currentUser?.displayName ?? 'SynChat User'}
         src={currentUser?.avatarUrl ?? undefined}
       />

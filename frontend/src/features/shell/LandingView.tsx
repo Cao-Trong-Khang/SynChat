@@ -95,7 +95,7 @@ export function LandingView() {
               aria-label={`Show ${slide.title}`}
               className={
                 index === activeSlideIndex
-                  ? 'h-2.5 w-6 rounded-full bg-[#005ae0] transition-all'
+                  ? 'h-2.5 w-6 rounded-full bg-[#0a66c2] transition-all'
                   : 'size-2.5 rounded-full bg-zinc-200 transition-all hover:bg-zinc-300'
               }
               key={slide.title}
@@ -108,7 +108,7 @@ export function LandingView() {
         <div className="mt-8 flex items-center justify-center gap-3">
           <button
             aria-label="Previous slide"
-            className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005ae0]"
+            className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a66c2]"
             onClick={showPreviousSlide}
             type="button"
           >
@@ -116,7 +116,7 @@ export function LandingView() {
           </button>
           <button
             aria-label="Next slide"
-            className="inline-flex size-10 items-center justify-center rounded-full bg-[#005ae0] text-white transition-colors hover:bg-[#004bb8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005ae0]"
+            className="inline-flex size-10 items-center justify-center rounded-full bg-[#0a66c2] text-white transition-colors hover:bg-[#084f96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a66c2]"
             onClick={showNextSlide}
             type="button"
           >

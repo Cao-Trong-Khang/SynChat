@@ -12,7 +12,7 @@ export function ConversationEmptyState({
   return (
     <div className="flex flex-1 items-center justify-center px-6 text-center">
       <div className="flex flex-col items-center">
-        <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-blue-50 text-[#005ae0]">
+        <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-blue-50 text-[#0a66c2]">
           <Search aria-hidden="true" className="size-5" />
         </div>
         <p className="text-sm font-medium text-zinc-900">{title}</p>

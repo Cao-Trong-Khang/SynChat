@@ -44,7 +44,7 @@ export function ConversationListItem({ conversation }: ConversationListItemProps
     >
       <div className="relative shrink-0">
         <Avatar
-          className="bg-blue-100 text-[#005ae0]"
+          className="bg-blue-100 text-[#0a66c2]"
           name={title}
           src={peerUser?.avatarUrl ?? undefined}
         />
@@ -70,7 +70,7 @@ export function ConversationListItem({ conversation }: ConversationListItemProps
             {preview}
           </p>
           {conversation.unreadCount > 0 ? (
-            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-semibold text-[#005ae0]">
+            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-semibold text-[#0a66c2]">
               {conversation.unreadCount}
             </span>
           ) : null}

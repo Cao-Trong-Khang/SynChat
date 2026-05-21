@@ -170,7 +170,7 @@ export function MessageList({
           <p className="text-sm text-zinc-500">Loading messages...</p>
         ) : (
           <div className="flex flex-col items-center">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-blue-50 text-3xl text-[#005ae0]">
+            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-blue-50 text-3xl text-[#0a66c2]">
               <span aria-hidden="true" className="animate-wave-hand origin-[70%_70%]">
                 👋
               </span>
