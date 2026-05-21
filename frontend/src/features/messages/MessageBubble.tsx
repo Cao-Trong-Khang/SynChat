@@ -45,14 +45,14 @@ export function MessageBubble({
         </div>
       ) : null}
 
-      <div className={isMine ? 'max-w-[70%]' : 'max-w-[70%]'}>
+      <div className="max-w-[70%] min-w-0">
         <div
           className={
             isMine
               ? message.localStatus === 'failed'
-                ? 'rounded-2xl rounded-br-md bg-red-50 px-4 py-2 text-sm leading-6 text-red-700 ring-1 ring-red-200'
-                : 'rounded-2xl rounded-br-md bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-950 ring-1 ring-blue-100'
-              : 'rounded-2xl rounded-bl-md bg-white px-4 py-2 text-sm leading-6 text-zinc-950 ring-1 ring-zinc-200'
+                ? 'break-words rounded-2xl rounded-br-md bg-red-50 px-4 py-2 text-sm leading-6 text-red-700 ring-1 ring-red-200 [overflow-wrap:anywhere]'
+                : 'break-words rounded-2xl rounded-br-md bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-950 ring-1 ring-blue-100 [overflow-wrap:anywhere]'
+              : 'break-words rounded-2xl rounded-bl-md bg-white px-4 py-2 text-sm leading-6 text-zinc-950 ring-1 ring-zinc-200 [overflow-wrap:anywhere]'
           }
         >
           {message.body}
