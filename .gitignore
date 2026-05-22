@@ -39,3 +39,5 @@ _.db
 
 **/*firebase-adminsdk*.json
 **/secrets/*.json
+
+frontend/public/firebase-messaging-sw.js
