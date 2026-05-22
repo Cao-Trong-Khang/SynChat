@@ -50,7 +50,7 @@ app:
 
 logging:
   level:
-    com.synchat.backend: DEBUG
+    com.synchat.backend: ${APP_LOG_LEVEL:INFO}
     org.springframework.security: INFO
     org.hibernate.SQL: OFF
     org.hibernate.orm.jdbc.bind: OFF
