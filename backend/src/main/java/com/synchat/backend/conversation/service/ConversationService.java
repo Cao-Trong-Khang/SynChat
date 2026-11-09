@@ -5,6 +5,7 @@ import com.synchat.backend.common.exception.ErrorCode;
 import com.synchat.backend.common.security.AuthenticatedUser;
 import com.synchat.backend.common.security.CurrentUserProvider;
 import com.synchat.backend.conversation.dto.ConversationMetadataResponse;
+import com.synchat.backend.conversation.dto.ConversationMetadataRow;
 import com.synchat.backend.conversation.dto.DirectConversationResponse;
 import com.synchat.backend.conversation.dto.SyncConversationsResponse;
 import com.synchat.backend.conversation.entity.ConversationEntity;
@@ -71,20 +72,20 @@ public class ConversationService {
         int pageSize = validateLimit(limit);
         boolean firstPage = cursor == null || cursor.isBlank();
 
-        List<ConversationEntity> fetched = firstPage
-                ? conversationRepository.findLatestConversationsForUser(
+        List<ConversationMetadataRow> fetched = firstPage
+                ? conversationRepository.findMetadataLatestForUser(
                         currentUser.userId(),
                         PageRequest.of(0, pageSize + 1)
                 )
                 : findAfterCursor(currentUser.userId(), cursor, pageSize);
 
         boolean hasMore = fetched.size() > pageSize;
-        List<ConversationEntity> page = hasMore ? fetched.subList(0, pageSize) : fetched;
+        List<ConversationMetadataRow> page = hasMore ? fetched.subList(0, pageSize) : fetched;
         String nextCursor = hasMore ? nextCursor(page) : null;
         Long serverEventSeq = firstPage ? serverEventSeq(currentUser.userId()) : null;
 
         List<ConversationMetadataResponse> items = page.stream()
-                .map(conversation -> conversationMetadataMapper.toMetadata(conversation, currentUser.userId()))
+                .map(ConversationMetadataRow::toResponse)
                 .toList();
 
         return new SyncConversationsResponse(items, nextCursor, hasMore, serverEventSeq);
@@ -95,9 +96,9 @@ public class ConversationService {
         return new DirectConversationResponse(metadata);
     }
 
-    private List<ConversationEntity> findAfterCursor(UUID currentUserId, String cursor, int pageSize) {
+    private List<ConversationMetadataRow> findAfterCursor(UUID currentUserId, String cursor, int pageSize) {
         ConversationCursor decodedCursor = conversationCursorCodec.decode(cursor);
-        return conversationRepository.findConversationsForUserAfterCursor(
+        return conversationRepository.findMetadataAfterCursorForUser(
                 currentUserId,
                 decodedCursor.lastMessageAt(),
                 decodedCursor.conversationId(),
@@ -113,9 +114,9 @@ public class ConversationService {
         return value;
     }
 
-    private String nextCursor(List<ConversationEntity> page) {
-        ConversationEntity last = page.get(page.size() - 1);
-        return conversationCursorCodec.encode(new ConversationCursor(last.getLastMessageAt(), last.getId()));
+    private String nextCursor(List<ConversationMetadataRow> page) {
+        ConversationMetadataRow last = page.get(page.size() - 1);
+        return conversationCursorCodec.encode(new ConversationCursor(last.lastMessageAt(), last.conversationId()));
     }
 
     private Long serverEventSeq(UUID currentUserId) {

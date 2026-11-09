@@ -19,6 +19,7 @@ import com.synchat.backend.auth.entity.UserCredentialEntity;
 import com.synchat.backend.auth.repository.AuthSessionRepository;
 import com.synchat.backend.auth.repository.UserCredentialRepository;
 import com.synchat.backend.auth.service.AuthService;
+import com.synchat.backend.conversation.dto.ConversationMetadataRow;
 import com.synchat.backend.conversation.entity.ConversationEntity;
 import com.synchat.backend.conversation.entity.ConversationMemberEntity;
 import com.synchat.backend.conversation.entity.ConversationMemberId;
@@ -401,6 +402,25 @@ class ConversationApiIntegrationTests {
                                 invocation.getArgument(2)
                         ))
                         .toList());
+        when(conversationRepository.findMetadataLatestForUser(any(), any()))
+                .thenAnswer(invocation -> {
+                    UUID userId = invocation.getArgument(0);
+                    return conversationsForUser(userId, invocation.getArgument(1))
+                            .map(c -> toMetadataRow(c, userId))
+                            .toList();
+                });
+        when(conversationRepository.findMetadataAfterCursorForUser(any(), any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    UUID userId = invocation.getArgument(0);
+                    return conversationsForUser(userId, invocation.getArgument(3))
+                            .filter(conversation -> isAfterCursor(
+                                    conversation,
+                                    invocation.getArgument(1),
+                                    invocation.getArgument(2)
+                            ))
+                            .map(c -> toMetadataRow(c, userId))
+                            .toList();
+                });
 
         when(conversationMemberRepository.save(any())).thenAnswer(invocation -> {
             ConversationMemberEntity member = invocation.getArgument(0);
@@ -455,6 +475,36 @@ class ConversationApiIntegrationTests {
         return conversation.getLastMessageAt().isBefore(cursorLastMessageAt)
                 || (conversation.getLastMessageAt().equals(cursorLastMessageAt)
                 && conversation.getId().compareTo(cursorConversationId) < 0);
+    }
+
+    private ConversationMetadataRow toMetadataRow(ConversationEntity conversation, UUID currentUserId) {
+        ConversationMemberEntity currentMember = membersById.get(new ConversationMemberId(conversation.getId(), currentUserId));
+        ConversationMemberEntity peerMember = membersById.values().stream()
+                .filter(m -> m.getConversationId().equals(conversation.getId()) && !m.getUserId().equals(currentUserId))
+                .findFirst()
+                .orElse(null);
+        UserEntity peer = peerMember != null ? usersById.get(peerMember.getUserId()) : null;
+        MessageEntity lastMessage = conversation.getLastMessageSeq() != null && conversation.getLastMessageSeq() > 0
+                ? messagesById.values().stream()
+                        .filter(m -> m.getConversationId().equals(conversation.getId()) && m.getSeq().equals(conversation.getLastMessageSeq()))
+                        .findFirst()
+                        .orElse(null)
+                : null;
+
+        return new ConversationMetadataRow(
+                conversation.getId(),
+                peer != null ? peer.getId() : null,
+                peer != null ? peer.getEmail() : null,
+                peer != null ? peer.getDisplayName() : null,
+                peer != null ? peer.getAvatarUrl() : null,
+                conversation.getLastMessageSeq(),
+                lastMessage != null ? lastMessage.getBody() : null,
+                lastMessage != null ? lastMessage.getSenderId() : null,
+                conversation.getLastMessageAt(),
+                currentMember != null ? currentMember.getUnreadCount() : 0,
+                peerMember != null ? peerMember.getReadSeq() : 0L,
+                peerMember != null ? peerMember.getDeliveredSeq() : 0L
+        );
     }
 
     private TestLogin registerAndLogin(String displayNamePrefix) {
